@@ -3,17 +3,19 @@ import type { ItemDefinition, ItemTheme } from '@/types/item';
 // アイテム定義の単一ソース
 // 半径・バウンド係数はテストプレイで調整しやすいよう Record で抜き出している
 
+// 増分は +6 〜 +10 で緩やかに（最大レベルで直径 ≒ 172px に収める）。
+// 大きくしすぎるとレベル 9 同士を画面内で接触させるのが現実的でなくなる。
 export const ITEM_RADIUS: Record<number, number> = {
   1: 20,
-  2: 32,
-  3: 46,
-  4: 58,
-  5: 72,
-  6: 86,
-  7: 98,
-  8: 112,
-  9: 128,
-  10: 150,
+  2: 26,
+  3: 32,
+  4: 38,
+  5: 45,
+  6: 52,
+  7: 60,
+  8: 68,
+  9: 76,
+  10: 86,
 };
 
 export const ITEM_RESTITUTION: Record<number, number> = {

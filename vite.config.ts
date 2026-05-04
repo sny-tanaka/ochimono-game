@@ -15,14 +15,16 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'robots.txt', 'icon-192.png', 'icon-512.png'],
+      includeAssets: ['robots.txt', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: '__APP_NAME__',
-        short_name: '__APP_SHORT_NAME__',
-        description: '__APP_DESCRIPTION__',
-        theme_color: '#000000',
-        background_color: '#ffffff',
+        name: '💖 にゃんハートいちごパズル',
+        short_name: 'にゃんパズル',
+        description: 'ハート・イチゴ・ネコをくっつけて遊ぶ落ちものパズルゲーム',
+        lang: 'ja',
+        theme_color: '#6B4FA0',
+        background_color: '#FDF4FF',
         display: 'standalone',
+        orientation: 'portrait',
         start_url: BASE,
         scope: BASE,
         icons: [

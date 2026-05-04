@@ -15,13 +15,13 @@ if (!self.define) {
         return e;
       })
   );
-  self.define = (r, c) => {
-    const t = e || ('document' in self ? document.currentScript.src : '') || location.href;
-    if (i[t]) return;
-    let a = {};
-    const m = (e) => s(e, t),
-      n = { module: { uri: t }, exports: a, require: m };
-    i[t] = Promise.all(r.map((e) => n[e] || m(e))).then((e) => (c(...e), a));
+  self.define = (r, a) => {
+    const c = e || ('document' in self ? document.currentScript.src : '') || location.href;
+    if (i[c]) return;
+    let n = {};
+    const f = (e) => s(e, c),
+      t = { module: { uri: c }, exports: n, require: f };
+    i[c] = Promise.all(r.map((e) => t[e] || f(e))).then((e) => (a(...e), n));
   };
 }
 define(['./workbox-8c29f6e4'], function (e) {
@@ -31,30 +31,34 @@ define(['./workbox-8c29f6e4'], function (e) {
     e.precacheAndRoute(
       [
         { url: 'registerSW.js', revision: '6c365df04952b818a480a3b287e93568' },
-        { url: 'index.html', revision: '60b0e486111c4d39cb4f8b0f67862d71' },
-        { url: 'images/gumi/item_10_special.svg', revision: '5211b9853d1658f6d439fddcfea9cb0c' },
-        { url: 'images/gumi/item_09_cat_l.svg', revision: 'ec621507c949f62b7a062f2e33dd26fc' },
+        { url: 'index.html', revision: '27d6d0f3a63af088cfcf04d1bbfebaa7' },
+        { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
+        { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
+        { url: 'images/gumi/item_10_special.svg', revision: '2d4a083747b65f5cb7631b21e4896b15' },
+        { url: 'images/gumi/item_09_cat_l.svg', revision: '04495bd48f3d13b0883c198ae5c7aa86' },
         {
           url: 'images/gumi/item_08_strawberry_l.svg',
-          revision: '798801fa9ac1e1289d5ecbcefe66c182',
+          revision: 'c168692493c45bdf3cc945b573e11c89',
         },
-        { url: 'images/gumi/item_07_heart_l.svg', revision: '005fd63a6214364e00e84c29bbd1b835' },
-        { url: 'images/gumi/item_06_cat_m.svg', revision: '87c460c35222a14bbc21d593f6032c82' },
+        { url: 'images/gumi/item_07_heart_l.svg', revision: '2fb6c705bbf4d79acabad740388c9efc' },
+        { url: 'images/gumi/item_06_cat_m.svg', revision: '0719fa89cc9bac47e58fb9b727138b5c' },
         {
           url: 'images/gumi/item_05_strawberry_m.svg',
-          revision: '58c83a15847cea7fdcc5faccbb4c3170',
+          revision: '4f024f78956c92b3f26d555f1dd72fd1',
         },
-        { url: 'images/gumi/item_04_heart_m.svg', revision: 'e02dc8d3c4f15a26a479517cb2b7a572' },
-        { url: 'images/gumi/item_03_cat_s.svg', revision: 'd00051f3d2f4f91a1ba8a168ecf28914' },
+        { url: 'images/gumi/item_04_heart_m.svg', revision: '069531daa60d1c3381fd7c077744f351' },
+        { url: 'images/gumi/item_03_cat_s.svg', revision: '405174eba0df75d10a6e4da70d944359' },
         {
           url: 'images/gumi/item_02_strawberry_s.svg',
-          revision: '35ed7b8e795efc028f76d368f033d90d',
+          revision: 'c302e6c2f960fea748b2a0aca03f3982',
         },
-        { url: 'images/gumi/item_01_heart_s.svg', revision: '7bbd11fd8efab01bc5eeb65c657c70e1' },
-        { url: 'assets/index-DUV89TB8.css', revision: null },
-        { url: 'assets/index-1B-0iP3r.js', revision: null },
+        { url: 'images/gumi/item_01_heart_s.svg', revision: '44bab915a76475cd6968cdc8d3145199' },
+        { url: 'assets/index-fLCK6ZGS.js', revision: null },
+        { url: 'assets/index-Dtnc5hQn.css', revision: null },
+        { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
+        { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'robots.txt', revision: 'fa1ded1ed7c11438a9b0385b1e112850' },
-        { url: 'manifest.webmanifest', revision: '1acff83b7884dc71aaf3c618e3d25456' },
+        { url: 'manifest.webmanifest', revision: 'd5562cdf8970f02c7b87798ae7ef4ca4' },
       ],
       {}
     ),

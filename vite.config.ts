@@ -5,8 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
 // GitHub Pages のサブパス公開に合わせる。リポジトリ名と一致させること。
-// 例: https://<user>.github.io/__REPO_NAME__/
-const BASE = '/__REPO_NAME__/';
+// 例: https://<user>.github.io/ochimono-game/
+const BASE = '/ochimono-game/';
 
 export default defineConfig({
   base: BASE,

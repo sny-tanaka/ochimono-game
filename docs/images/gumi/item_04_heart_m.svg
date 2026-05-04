@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="gummyBlueGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#E0F7FA"/>
+      <stop offset="35%" stop-color="#A8EEFF"/>
+      <stop offset="75%" stop-color="#29B6F6"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </radialGradient>
+
+    <linearGradient id="ribbonPinkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFB6C1"/>
+      <stop offset="100%" stop-color="#FF80AB"/>
+    </linearGradient>
+
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M 50 25 
+           C 50 5, 2 5, 2 40 
+           C 2 68, 50 96, 50 96 
+           C 50 96, 98 68, 98 40 
+           C 98 5, 50 5, 50 25 Z" 
+        fill="url(#gummyBlueGrad)" 
+        stroke="#0288D1" 
+        stroke-width="4" 
+        stroke-linejoin="round"/>
+
+  <path d="M 50 28 
+           C 48 10, 8 10, 8 40 
+           C 8 64, 50 90, 50 90 
+           C 50 90, 92 64, 92 40 
+           C 92 10, 52 10, 50 28 Z" 
+        fill="none" 
+        stroke="url(#highlightGrad)" 
+        stroke-width="3" 
+        opacity="0.7"/>
+
+  <path d="M 50 28 
+           C 40 12, 14 12, 12 35 
+           C 12 45, 25 55, 50 68 
+           C 75 55, 88 45, 88 35 
+           C 86 12, 60 12, 50 28 Z" 
+        fill="url(#highlightGrad)" 
+        opacity="0.4"/>
+
+  <ellipse cx="22" cy="26" rx="9" ry="4.5" transform="rotate(-40 22 26)" fill="#FFFFFF" opacity="0.95"/>
+  <ellipse cx="12" cy="38" rx="4" ry="2" transform="rotate(-65 12 38)" fill="#FFFFFF" opacity="0.9"/>
+
+  <ellipse cx="78" cy="26" rx="6" ry="3" transform="rotate(40 78 26)" fill="#FFFFFF" opacity="0.8"/>
+  <ellipse cx="88" cy="38" rx="2.5" ry="1.5" transform="rotate(65 88 38)" fill="#FFFFFF" opacity="0.6"/>
+
+  <g>
+    <path d="M 48 24 
+             C 25 12, 20 42, 48 32 Z" 
+          fill="url(#ribbonPinkGrad)" 
+          stroke="#C2185B" 
+          stroke-width="2.5" 
+          stroke-linejoin="round"/>
+    
+    <path d="M 52 24 
+             C 75 12, 80 42, 52 32 Z" 
+          fill="url(#ribbonPinkGrad)" 
+          stroke="#C2185B" 
+          stroke-width="2.5" 
+          stroke-linejoin="round"/>
+    
+    <rect x="44" y="22" width="12" height="14" rx="4" 
+          fill="#D81B60" 
+          stroke="#C2185B" 
+          stroke-width="2.5"/>
+
+    <ellipse cx="33" cy="25" rx="5" ry="2" transform="rotate(-25 33 25)" fill="#FFFFFF" opacity="0.8"/>
+    <ellipse cx="67" cy="25" rx="5" ry="2" transform="rotate(25 67 25)" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="47" cy="25" r="2" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+</svg>

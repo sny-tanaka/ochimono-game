@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="gummyRedGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFD1D6"/>
+      <stop offset="35%" stop-color="#FF6B77"/>
+      <stop offset="75%" stop-color="#CC1A2A"/>
+      <stop offset="100%" stop-color="#AA0010"/>
+    </radialGradient>
+
+    <radialGradient id="creamGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#FFFDE7"/>
+      <stop offset="100%" stop-color="#FFF8E1"/>
+    </radialGradient>
+
+    <radialGradient id="gummyGreenGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#C8E6C9"/>
+      <stop offset="100%" stop-color="#4CAF50"/>
+    </radialGradient>
+
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M 50 98 
+           C 12 90, 2 65, 2 45 
+           C 2 25, 20 25, 50 30 
+           C 80 25, 98 25, 98 45 
+           C 98 65, 88 90, 50 98 Z" 
+        fill="url(#gummyRedGrad)" 
+        stroke="#AA0010" 
+        stroke-width="4" 
+        stroke-linejoin="round"/>
+
+  <path d="M 50 92 
+           C 18 85, 8 63, 8 45 
+           C 8 30, 22 30, 50 35 
+           C 78 30, 92 30, 92 45 
+           C 92 63, 82 85, 50 92 Z" 
+        fill="none" 
+        stroke="url(#highlightGrad)" 
+        stroke-width="3" 
+        opacity="0.7"/>
+
+  <g fill="#FFF59D" stroke="#CC1A2A" stroke-width="1.5">
+    <ellipse cx="25" cy="55" rx="2.5" ry="3.5" transform="rotate(20 25 55)"/>
+    <ellipse cx="75" cy="55" rx="2.5" ry="3.5" transform="rotate(-20 75 55)"/>
+    <ellipse cx="50" cy="65" rx="3" ry="4"/>
+    <ellipse cx="32" cy="72" rx="2" ry="3" transform="rotate(15 32 72)"/>
+    <ellipse cx="68" cy="72" rx="2" ry="3" transform="rotate(-15 68 72)"/>
+    <ellipse cx="40" cy="85" rx="1.5" ry="2.5" transform="rotate(10 40 85)"/>
+    <ellipse cx="60" cy="85" rx="1.5" ry="2.5" transform="rotate(-10 60 85)"/>
+    <ellipse cx="50" cy="45" rx="2.5" ry="3.5"/>
+  </g>
+
+  <path d="M 45 35 C 30 28, 6 25, 6 35 C 15 45, 35 40, 45 35 Z" fill="url(#gummyGreenGrad)" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 55 35 C 70 28, 94 25, 94 35 C 85 45, 65 40, 55 35 Z" fill="url(#gummyGreenGrad)" stroke="#2E7D32" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <path d="M 12 45 C 12 35, 25 32, 45 36 C 25 40, 15 45, 12 45 Z" fill="url(#highlightGrad)" opacity="0.4"/>
+  <ellipse cx="18" cy="48" rx="7" ry="3.5" transform="rotate(-30 18 48)" fill="#FFFFFF" opacity="0.9"/>
+  <ellipse cx="11" cy="60" rx="3" ry="1.5" transform="rotate(-60 11 60)" fill="#FFFFFF" opacity="0.8"/>
+
+
+  <path d="M 22 45 
+           C 15 55, 35 60, 50 60 
+           C 65 60, 85 55, 78 45 
+           C 82 35, 70 28, 60 28 
+           C 58 20, 50 18, 50 18 
+           C 50 18, 42 20, 40 28 
+           C 30 28, 18 35, 22 45 Z" 
+        fill="url(#creamGrad)" 
+        stroke="#F9A825" 
+        stroke-width="3" 
+        stroke-linejoin="round"/>
+
+  <path d="M 28 46 Q 50 56 72 46" fill="none" stroke="#F9A825" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 38 32 Q 50 38 62 32" fill="none" stroke="#F9A825" stroke-width="2.5" stroke-linecap="round"/>
+
+  <path d="M 28 46 Q 50 54 72 46" fill="none" stroke="url(#highlightGrad)" stroke-width="3" stroke-linecap="round" opacity="0.8" transform="translate(0, -2)"/>
+  <ellipse cx="32" cy="40" rx="4" ry="2" transform="rotate(-20 32 40)" fill="#FFFFFF" opacity="0.8"/>
+  <ellipse cx="68" cy="40" rx="4" ry="2" transform="rotate(20 68 40)" fill="#FFFFFF" opacity="0.8"/>
+
+
+  <path d="M 50 10 
+           C 46 4, 38 7, 38 13 
+           C 38 18, 50 25, 50 25 
+           C 50 25, 62 18, 62 13 
+           C 62 7, 54 4, 50 10 Z" 
+        fill="url(#gummyRedGrad)" 
+        stroke="#AA0010" 
+        stroke-width="2.5" 
+        stroke-linejoin="round"/>
+
+  <ellipse cx="43" cy="11" rx="2.5" ry="1" transform="rotate(-30 43 11)" fill="#FFFFFF" opacity="0.9"/>
+</svg>

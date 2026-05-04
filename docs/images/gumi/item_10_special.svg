@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="heartSoftGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFF0F5"/>
+      <stop offset="50%" stop-color="#FCE4EC"/>
+      <stop offset="100%" stop-color="#E1BEE7"/>
+    </radialGradient>
+
+    <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5252"/>
+      <stop offset="20%" stop-color="#FFAB40"/>
+      <stop offset="40%" stop-color="#FFEA00"/>
+      <stop offset="60%" stop-color="#69F0AE"/>
+      <stop offset="80%" stop-color="#448AFF"/>
+      <stop offset="100%" stop-color="#E040FB"/>
+    </linearGradient>
+
+    <radialGradient id="gummyRedGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFD1D6"/>
+      <stop offset="35%" stop-color="#FF6B77"/>
+      <stop offset="75%" stop-color="#CC1A2A"/>
+      <stop offset="100%" stop-color="#AA0010"/>
+    </radialGradient>
+    <radialGradient id="gummyGreenGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#C8E6C9"/>
+      <stop offset="100%" stop-color="#4CAF50"/>
+    </radialGradient>
+
+    <radialGradient id="gummyWhiteGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#FAFAFA"/>
+      <stop offset="75%" stop-color="#EEEEEE"/>
+      <stop offset="100%" stop-color="#E0E0E0"/>
+    </radialGradient>
+    <radialGradient id="earPinkGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FFCDD2"/>
+    </radialGradient>
+
+    <radialGradient id="goldGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF59D"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </radialGradient>
+
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <path id="sparkle" d="M 0 -8 C 0 -2, 2 0, 8 0 C 2 0, 0 2, 0 8 C 0 2, -2 0, -8 0 C -2 0, 0 -2, 0 -8 Z"/>
+  </defs>
+
+  <path d="M 50 25 
+           C 50 5, 2 5, 2 40 
+           C 2 68, 50 96, 50 96 
+           C 50 96, 98 68, 98 40 
+           C 98 5, 50 5, 50 25 Z" 
+        fill="url(#heartSoftGrad)" 
+        stroke="url(#rainbowGrad)" 
+        stroke-width="4.5" 
+        stroke-linejoin="round"/>
+
+  <path d="M 50 28 
+           C 48 10, 8 10, 8 40 
+           C 8 64, 50 90, 50 90 
+           C 50 90, 92 64, 92 40 
+           C 92 10, 52 10, 50 28 Z" 
+        fill="none" 
+        stroke="url(#highlightGrad)" 
+        stroke-width="3.5" 
+        opacity="0.9"/>
+
+
+  <g transform="translate(10.5, 36.5) scale(0.45) rotate(15 50 50)">
+    <path d="M 50 98 C 25 90, 2 65, 2 40 C 2 15, 20 5, 50 15 C 80 5, 98 15, 98 40 C 98 65, 75 90, 50 98 Z" 
+          fill="url(#gummyRedGrad)" stroke="#AA0010" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 50 92 C 30 85, 8 62, 8 40 C 8 20, 25 10, 50 18 C 75 10, 92 20, 92 40 C 92 62, 70 85, 50 92 Z" 
+          fill="none" stroke="url(#highlightGrad)" stroke-width="2.5" opacity="0.8"/>
+    <g fill="#FFF59D" stroke="#CC1A2A" stroke-width="1.5">
+      <ellipse cx="35" cy="40" rx="3" ry="4" transform="rotate(15 35 40)"/>
+      <ellipse cx="65" cy="40" rx="3" ry="4" transform="rotate(-15 65 40)"/>
+      <ellipse cx="50" cy="55" rx="3" ry="4"/>
+      <ellipse cx="28" cy="62" rx="2.5" ry="3.5" transform="rotate(10 28 62)"/>
+      <ellipse cx="72" cy="62" rx="2.5" ry="3.5" transform="rotate(-10 72 62)"/>
+      <ellipse cx="50" cy="30" rx="2" ry="3"/>
+    </g>
+    <g fill="url(#gummyGreenGrad)" stroke="#2E7D32" stroke-width="2" stroke-linejoin="round">
+      <path d="M 50 15 C 50 15, 60 2, 85 2 C 75 10, 65 15, 50 15 Z"/>
+      <path d="M 50 15 C 50 15, 40 2, 15 2 C 25 10, 35 15, 50 15 Z"/>
+      <path d="M 50 15 C 50 15, 60 25, 50 35 C 40 25, 50 15, 50 15 Z"/>
+    </g>
+    <ellipse cx="22" cy="28" rx="8" ry="4" transform="rotate(-40 22 28)" fill="#FFFFFF" opacity="0.95"/>
+  </g>
+
+
+  <g transform="translate(42.5, 33.5) scale(0.45) rotate(-5 50 50)">
+    <path d="M 50 15 C 38 15 28 19 21 26 L 12 6 L 24 33 C 13 41 6 53 6 66 C 6 86 26 96 50 96 C 74 96 94 86 94 66 C 94 53 87 41 76 33 L 88 6 L 79 26 C 72 19 62 15 50 15 Z" 
+          fill="url(#gummyWhiteGrad)" stroke="#BDBDBD" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 22 26 L 15 12 L 24 30 Z" fill="url(#earPinkGrad)"/>
+    <path d="M 78 26 L 85 12 L 76 30 Z" fill="url(#earPinkGrad)"/>
+    <path d="M 50 19 C 40 19 32 23 26 28 L 18 14 L 28 35 C 18 42 10 53 10 66 C 10 82 28 92 50 92 C 72 92 90 82 90 66 C 90 53 82 42 72 35 L 82 14 L 74 28 C 68 23 60 19 50 19 Z" 
+          fill="none" stroke="url(#highlightGrad)" stroke-width="2.5" opacity="0.8"/>
+    
+    <ellipse cx="18" cy="65" rx="9" ry="6" fill="#FF8FAB" opacity="0.95"/>
+    <ellipse cx="80" cy="65" rx="7" ry="4" fill="#FFB6C1" opacity="0.8"/>
+
+    <polyline points="25,55 35,59 25,63" fill="none" stroke="#757575" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="75,55 65,59 75,63" fill="none" stroke="#757575" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <polygon points="48,64 52,64 50,67" fill="#FF8FAB"/>
+    <path d="M 42 68 C 42 76, 58 76, 58 68" fill="none" stroke="#757575" stroke-width="2.5" stroke-linecap="round"/>
+
+    <g stroke="#BDBDBD" stroke-width="2" stroke-linecap="round">
+      <line x1="12" y1="62" x2="2" y2="60"/>
+      <line x1="12" y1="66" x2="1" y2="66"/>
+      <line x1="12" y1="70" x2="2" y2="72"/>
+      <line x1="88" y1="62" x2="98" y2="60"/>
+      <line x1="88" y1="66" x2="99" y2="66"/>
+      <line x1="88" y1="70" x2="98" y2="72"/>
+    </g>
+    <ellipse cx="28" cy="30" rx="8" ry="3.5" transform="rotate(-35 28 30)" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+
+
+  <path d="M 50 28 
+           C 40 12, 14 12, 12 35 
+           C 12 45, 25 55, 50 68 
+           C 75 55, 88 45, 88 35 
+           C 86 12, 60 12, 50 28 Z" 
+        fill="url(#highlightGrad)" 
+        opacity="0.3"/>
+  
+  <ellipse cx="22" cy="26" rx="9" ry="4.5" transform="rotate(-40 22 26)" fill="#FFFFFF" opacity="0.95"/>
+  <ellipse cx="12" cy="38" rx="4" ry="2" transform="rotate(-65 12 38)" fill="#FFFFFF" opacity="0.9"/>
+  <ellipse cx="78" cy="26" rx="6" ry="3" transform="rotate(40 78 26)" fill="#FFFFFF" opacity="0.8"/>
+
+
+  <use href="#sparkle" transform="translate(20, 20) scale(1.1) rotate(15)" fill="url(#rainbowGrad)"/>
+  <use href="#sparkle" transform="translate(82, 22) scale(0.9) rotate(-10)" fill="url(#goldGrad)"/>
+  <use href="#sparkle" transform="translate(15, 65) scale(0.8) rotate(45)" fill="url(#goldGrad)"/>
+  <use href="#sparkle" transform="translate(85, 68) scale(1.2) rotate(-20)" fill="url(#rainbowGrad)"/>
+  <use href="#sparkle" transform="translate(50, 88) scale(0.7)" fill="url(#goldGrad)"/>
+</svg>

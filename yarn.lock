@@ -1558,6 +1558,11 @@
     "@types/fined" "*"
     "@types/node" "*"
 
+"@types/matter-js@^0.20.2":
+  version "0.20.2"
+  resolved "https://registry.yarnpkg.com/@types/matter-js/-/matter-js-0.20.2.tgz#f24c6e9ffd779426336d3c966f7bd2e69dceee08"
+  integrity sha512-3PPKy3QxvZ89h9+wdBV2488I1JLVs7DEpIkPvgO8JC1mUdiVSO37ZIvVctOTD7hIq8OAL2gJ3ugGSuUip6DhCw==
+
 "@types/node@*":
   version "25.6.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-25.6.0.tgz#4e09bad9b469871f2d0f68140198cbd714f4edca"
@@ -3977,6 +3982,11 @@ math-intrinsics@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/math-intrinsics/-/math-intrinsics-1.1.0.tgz#a0dd74be81e2aa5c2f27e65ce283605ee4e2b7f9"
   integrity sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==
+
+matter-js@^0.20.0:
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/matter-js/-/matter-js-0.20.0.tgz#dc3c95c40ea5ef8937788a2770c3f97223b352ed"
+  integrity sha512-iC9fYR7zVT3HppNnsFsp9XOoQdQN2tUyfaKg4CHLH8bN+j6GT4Gw7IH2rP0tflAebrHFw730RR3DkVSZRX8hwA==
 
 merge-stream@^2.0.0:
   version "2.0.0"

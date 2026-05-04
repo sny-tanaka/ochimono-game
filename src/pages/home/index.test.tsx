@@ -1,11 +1,40 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { Page } from '@/pages/home';
 
+// useGame は内部で Matter.js のキャンバス描画を行う。jsdom 上では canvas 周辺の API が
+// 限定的なので、レイアウトが描画されてスタート画面が見えることだけを確認する。
+vi.mock('@/hooks/useGame', () => ({
+  useGame: () => ({
+    status: 'idle',
+    score: 0,
+    bestScore: 0,
+    isNewRecord: false,
+    currentItem: null,
+    nextItem: null,
+    isSoundOn: true,
+    mergeEffects: [],
+    canvasContainerRef: { current: null },
+    drop: () => {},
+    start: () => {},
+    restart: () => {},
+    toggleSound: () => {},
+    fieldWidth: 360,
+    fieldHeight: 560,
+    gameOverLineY: 80,
+  }),
+}));
+
 describe('HomePage', () => {
-  test('見出しが表示される', () => {
+  test('スタート画面が表示される', () => {
     render(<Page />);
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'スタート' })).toBeInTheDocument();
+  });
+
+  test('上部バーにスコアと NEXT が表示される', () => {
+    render(<Page />);
+    expect(screen.getByTestId('score-value')).toHaveTextContent('0');
+    expect(screen.getByTestId('next-item')).toBeInTheDocument();
   });
 });

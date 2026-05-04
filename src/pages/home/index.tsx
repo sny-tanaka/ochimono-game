@@ -1,9 +1,11 @@
 import styles from './style.module.scss';
 
+import { GameLayout } from '@/components/Layout/GameLayout/GameLayout';
+
 export const Page = () => {
   return (
     <div className={styles.index}>
-      <h1>__APP_NAME__</h1>
+      <GameLayout />
     </div>
   );
 };

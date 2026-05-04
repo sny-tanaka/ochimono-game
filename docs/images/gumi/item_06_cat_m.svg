@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="gummyKijitoraGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#E8D4BE"/>
+      <stop offset="40%" stop-color="#D4B896"/>
+      <stop offset="75%" stop-color="#B8936D"/>
+      <stop offset="100%" stop-color="#A07850"/>
+    </radialGradient>
+
+    <radialGradient id="earPinkGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFEBEE"/>
+      <stop offset="100%" stop-color="#FFCDD2"/>
+    </radialGradient>
+
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M 50 15 
+           C 38 15 28 19 21 26 
+           L 12 6 
+           L 24 33 
+           C 13 41 6 53 6 66 
+           C 6 86 26 96 50 96 
+           C 74 96 94 86 94 66 
+           C 94 53 87 41 76 33 
+           L 88 6 
+           L 79 26 
+           C 72 19 62 15 50 15 Z" 
+        fill="url(#gummyKijitoraGrad)" 
+        stroke="#6D4C2A" 
+        stroke-width="3" 
+        stroke-linejoin="round"/>
+
+  <path d="M 22 26 L 15 12 L 24 30 Z" fill="url(#earPinkGrad)"/>
+  <path d="M 78 26 L 85 12 L 76 30 Z" fill="url(#earPinkGrad)"/>
+
+  <g stroke="#3E2400" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.75">
+    <path d="M 50 18 L 50 32" stroke-width="3"/>
+    <path d="M 41 21 L 43 31"/>
+    <path d="M 59 21 L 57 31"/>
+    <path d="M 6 52 L 16 55"/>
+    <path d="M 6 61 L 18 63"/>
+    <path d="M 94 52 L 84 55"/>
+    <path d="M 94 61 L 82 63"/>
+  </g>
+
+  <path d="M 50 19 
+           C 40 19 32 23 26 28 
+           L 18 14 
+           L 28 35 
+           C 18 42 10 53 10 66 
+           C 10 82 28 92 50 92 
+           C 72 92 90 82 90 66 
+           C 90 53 82 42 72 35 
+           L 82 14 
+           L 74 28 
+           C 68 23 60 19 50 19 Z" 
+        fill="none" 
+        stroke="url(#highlightGrad)" 
+        stroke-width="2.5" 
+        opacity="0.8"/>
+
+  <circle cx="32" cy="58" r="6" fill="#8BC34A" stroke="#558B2F" stroke-width="0.5"/>
+  <circle cx="32" cy="58" r="4.5" fill="#212121"/>
+  <circle cx="30" cy="56" r="1.5" fill="#FFFFFF"/>
+  <polyline points="72,55 64,58 72,61" fill="none" stroke="#3E2400" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <polygon points="48,66 52,66 50,69" fill="#6D4C2A"/>
+
+  <path d="M 46 72 Q 48 75 50 72 Q 52 75 54 72" fill="none" stroke="#6D4C2A" stroke-width="1.5" stroke-linecap="round"/>
+
+  <g stroke="#FAFAFA" stroke-width="2" stroke-linecap="round" opacity="0.9">
+    <line x1="15" y1="63" x2="3" y2="61"/>
+    <line x1="15" y1="67" x2="2" y2="67"/>
+    <line x1="15" y1="71" x2="3" y2="73"/>
+    <line x1="85" y1="63" x2="97" y2="61"/>
+    <line x1="85" y1="67" x2="98" y2="67"/>
+    <line x1="85" y1="71" x2="97" y2="73"/>
+  </g>
+
+  <path d="M 28 35 
+           C 35 25 45 22 50 22 
+           C 40 28 32 38 32 50 
+           C 30 40 25 38 28 35 Z" 
+        fill="url(#highlightGrad)" 
+        opacity="0.6"/>
+
+  <ellipse cx="28" cy="30" rx="8" ry="3.5" transform="rotate(-35 28 30)" fill="#FFFFFF" opacity="0.9"/>
+  <ellipse cx="18" cy="45" rx="3.5" ry="1.5" transform="rotate(-60 18 45)" fill="#FFFFFF" opacity="0.8"/>
+</svg>

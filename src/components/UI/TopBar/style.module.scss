@@ -1,0 +1,18 @@
+@use 'variables' as var;
+
+.top_bar {
+  // GameLayout のスケルトン (top_bar_placeholder) と高さを揃えること
+  flex: 0 0 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #ffe4f1 0%, #fdf4ff 100%);
+  box-shadow: 0 2px 8px rgba(107, 79, 160, 0.1);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

@@ -1,0 +1,28 @@
+@use 'variables' as var;
+
+.layout {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #fdf4ff 0%, #f1e7ff 100%);
+  overflow: hidden;
+}
+
+// TopBar と高さを揃えるスケルトン（フィールドサイズ計測用）
+.top_bar_placeholder {
+  flex: 0 0 64px;
+}
+
+.main {
+  flex: 1 1 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 0;
+}
+
+.field_wrapper {
+  position: relative;
+  overflow: hidden;
+}

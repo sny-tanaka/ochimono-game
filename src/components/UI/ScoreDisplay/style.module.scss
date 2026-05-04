@@ -1,0 +1,42 @@
+@use 'variables' as var;
+
+.score_display {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b4fa0;
+  letter-spacing: 0.08em;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2c1f4a;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.label_small {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8a7aa8;
+  letter-spacing: 0.08em;
+}
+
+.value_small {
+  font-size: 14px;
+  font-weight: 700;
+  color: #6b4fa0;
+  font-variant-numeric: tabular-nums;
+}

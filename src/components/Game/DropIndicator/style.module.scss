@@ -1,0 +1,27 @@
+@use 'variables' as var;
+
+.line {
+  position: absolute;
+  top: 0;
+  width: 0;
+  border-left: 1.5px dashed rgba(107, 79, 160, 0.45);
+  pointer-events: none;
+}
+
+.preview {
+  position: absolute;
+  top: 4px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(107, 79, 160, 0.3));
+  animation: bob 1.2s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}

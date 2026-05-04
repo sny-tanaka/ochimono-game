@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="gummyYellowGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFF8E1"/>
+      <stop offset="35%" stop-color="#FFE57F"/>
+      <stop offset="75%" stop-color="#FFD740"/>
+      <stop offset="100%" stop-color="#FFC400"/>
+    </radialGradient>
+
+    <linearGradient id="crownGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </linearGradient>
+
+    <linearGradient id="highlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M 50 35 
+           C 50 10, 2 10, 2 45 
+           C 2 72, 50 96, 50 96 
+           C 50 96, 98 72, 98 45 
+           C 98 10, 50 10, 50 35 Z" 
+        fill="url(#gummyYellowGrad)" 
+        stroke="#E6A800" 
+        stroke-width="4" 
+        stroke-linejoin="round"/>
+
+  <path d="M 50 38 
+           C 48 18, 8 18, 8 45 
+           C 8 68, 50 90, 50 90 
+           C 50 90, 92 68, 92 45 
+           C 92 18, 52 18, 50 38 Z" 
+        fill="none" 
+        stroke="url(#highlightGrad)" 
+        stroke-width="3" 
+        opacity="0.7"/>
+
+  <path d="M 38 35 Q 50 38 62 35 L 68 16 L 58 24 L 50 8 L 42 24 L 32 16 Z" 
+        fill="url(#crownGrad)" 
+        stroke="#E65100" 
+        stroke-width="2.5" 
+        stroke-linejoin="round"/>
+
+  <path d="M 44 26 L 50 15 L 56 26" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <ellipse cx="40" cy="31" rx="4" ry="1.5" transform="rotate(-15 40 31)" fill="#FFFFFF" opacity="0.6"/>
+  <ellipse cx="60" cy="31" rx="4" ry="1.5" transform="rotate(15 60 31)" fill="#FFFFFF" opacity="0.6"/>
+
+  <g stroke="#E65100" stroke-width="1.5">
+    <circle cx="32" cy="16" r="3.5" fill="#F44336"/>
+    <circle cx="50" cy="8" r="3.5" fill="#2196F3"/>
+    <circle cx="68" cy="16" r="3.5" fill="#4CAF50"/>
+  </g>
+  
+  <circle cx="31" cy="15" r="1" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="49" cy="7" r="1" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="67" cy="15" r="1" fill="#FFFFFF" opacity="0.9"/>
+
+  <path d="M 50 38 
+           C 40 22, 14 22, 12 43 
+           C 12 52, 25 60, 50 72 
+           C 75 60, 88 52, 88 43 
+           C 86 22, 60 22, 50 38 Z" 
+        fill="url(#highlightGrad)" 
+        opacity="0.4"/>
+
+  <ellipse cx="22" cy="33" rx="8" ry="4" transform="rotate(-40 22 33)" fill="#FFFFFF" opacity="0.95"/>
+  <ellipse cx="12" cy="46" rx="3.5" ry="1.75" transform="rotate(-65 12 46)" fill="#FFFFFF" opacity="0.9"/>
+
+  <ellipse cx="78" cy="33" rx="5" ry="2.5" transform="rotate(40 78 33)" fill="#FFFFFF" opacity="0.8"/>
+  <ellipse cx="88" cy="46" rx="2" ry="1" transform="rotate(65 88 46)" fill="#FFFFFF" opacity="0.6"/>
+</svg>

@@ -1,0 +1,33 @@
+@use 'variables' as var;
+
+.surface {
+  position: relative;
+  background: linear-gradient(180deg, #fff7fc 0%, #f6ecff 100%);
+  box-shadow: inset 0 0 0 2px rgba(107, 79, 160, 0.18);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.canvas_layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+
+  // Matter.js が中に挿入する <canvas> を埋める
+  > canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+}
+
+.game_over_line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed rgba(255, 60, 80, 0.55);
+  pointer-events: none;
+}

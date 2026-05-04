@@ -1,0 +1,56 @@
+@use 'variables' as var;
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 22px;
+  text-align: center;
+  width: 100%;
+  max-width: 280px;
+  box-shadow: 0 12px 40px rgba(107, 79, 160, 0.25);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #6b4fa0;
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.lead {
+  font-size: 14px;
+  color: #4a3c70;
+  margin: 0 0 20px;
+  line-height: 1.6;
+}
+
+.start {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #b8a4ff 0%, #6b4fa0 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #4a3578;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #4a3578;
+  }
+}

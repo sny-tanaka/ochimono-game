@@ -1,6 +1,5 @@
 @use 'variables' as var;
 
 .index {
-  color: var.$text-dark;
-  padding: 24px;
+  min-height: 100dvh;
 }

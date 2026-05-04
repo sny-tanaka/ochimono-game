@@ -1,8 +1,9 @@
 @use 'variables' as var;
 
 .top_bar {
-  // GameLayout のスケルトン (top_bar_placeholder) と高さを揃えること
-  flex: 0 0 64px;
+  // GameLayout のスケルトン (top_bar_placeholder) と高さを必ず揃えること。
+  flex: 0 0 72px;
+  height: 72px;
   display: flex;
   justify-content: space-between;
   align-items: center;

@@ -115,3 +115,18 @@ export const ITEM_LIST: readonly ItemDefinition[] = Array.from(
 
 // NEXT として落下させて良い最大レベル（レベル4以上は合体でしか出現しない）
 export const MAX_DROPPABLE_LEVEL = 3;
+
+// ITEM_RADIUS をチューニングしたときの基準フィールド幅。
+// 実フィールド幅がこの値を下回る場合は半径を比例縮小する（横画面でも難易度を一定に保つ）。
+// 上回っても拡大はせず、ITEM_RADIUS をそのまま最大値として使う。
+export const REFERENCE_FIELD_WIDTH = 360;
+
+// 実フィールド幅から半径スケール係数を返す（1.0 がキャップ）
+export const computeRadiusScale = (fieldWidth: number): number =>
+  Math.min(1, fieldWidth / REFERENCE_FIELD_WIDTH);
+
+// レベルと実フィールド幅から ItemDefinition を生成する。radius 以外は ITEMS と同じ。
+export const itemForFieldWidth = (level: number, fieldWidth: number): ItemDefinition => {
+  const base = ITEMS[level];
+  return { ...base, radius: base.radius * computeRadiusScale(fieldWidth) };
+};

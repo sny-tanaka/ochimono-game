@@ -2,25 +2,14 @@ import Matter from 'matter-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GAME } from '@/constants/game';
-import { ITEMS, MAX_DROPPABLE_LEVEL, MAX_ITEM_LEVEL } from '@/constants/items';
+import { itemForFieldWidth, MAX_DROPPABLE_LEVEL, MAX_ITEM_LEVEL } from '@/constants/items';
 import { PHYSICS } from '@/constants/physics';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
 import type { GameStatus, MergeEffect } from '@/types/game';
 import type { ItemDefinition } from '@/types/item';
-import {
-  createItemBody,
-  createWalls,
-  getItemByLevel,
-  getItemDataFromBody,
-  midpoint,
-} from '@/utils/physics';
+import { createItemBody, createWalls, getItemDataFromBody, midpoint } from '@/utils/physics';
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
-
-const pickRandomDroppable = (): ItemDefinition => {
-  const level = Math.floor(Math.random() * MAX_DROPPABLE_LEVEL) + 1;
-  return ITEMS[level];
-};
 
 // SVG パス（public 配下）に base URL を付与
 const resolveTexturePath = (svgPath: string): string =>
@@ -81,11 +70,17 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const statusRef = useRef<GameStatus>('idle');
 
   // 初期サイズで Matter を 1 度だけ構築する。リサイズ対応はしない。
+  // アイテム半径のスケールも fieldWidth に依存するため同じ ref を共有する。
   const fieldWidthRef = useRef(fieldWidth);
   const fieldHeightRef = useRef(fieldHeight);
 
   const score = useScore();
   const sound = useSound();
+
+  const pickRandomDroppable = (): ItemDefinition => {
+    const level = Math.floor(Math.random() * MAX_DROPPABLE_LEVEL) + 1;
+    return itemForFieldWidth(level, fieldWidthRef.current);
+  };
 
   // セットアップ：Engine / Render / Runner / 壁
   useEffect(() => {
@@ -167,12 +162,10 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         isSpecial = true;
         sound.play('special');
       } else {
-        const mergedItem = getItemByLevel(mergedLevel);
-        if (mergedItem) {
-          const newBody = createItemBody(mergedItem, center.x, center.y, performance.now());
-          applySprite(newBody, mergedItem);
-          Matter.World.add(engine.world, newBody);
-        }
+        const mergedItem = itemForFieldWidth(mergedLevel, fieldWidthRef.current);
+        const newBody = createItemBody(mergedItem, center.x, center.y, performance.now());
+        applySprite(newBody, mergedItem);
+        Matter.World.add(engine.world, newBody);
         addedScore = calcMergeScore(mergedLevel);
         isSpecial = mergedLevel === MAX_ITEM_LEVEL;
         sound.play(isSpecial ? 'special' : 'merge');

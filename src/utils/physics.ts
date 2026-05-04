@@ -1,6 +1,5 @@
 import Matter from 'matter-js';
 
-import { ITEMS } from '@/constants/items';
 import { PHYSICS } from '@/constants/physics';
 import type { ItemDefinition } from '@/types/item';
 
@@ -67,6 +66,3 @@ export const midpoint = (a: Matter.Body, b: Matter.Body): { x: number; y: number
   x: (a.position.x + b.position.x) / 2,
   y: (a.position.y + b.position.y) / 2,
 });
-
-// レベルに対応する ItemDefinition 取得（範囲外なら null）
-export const getItemByLevel = (level: number): ItemDefinition | null => ITEMS[level] ?? null;

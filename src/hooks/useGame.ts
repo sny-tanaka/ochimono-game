@@ -102,7 +102,10 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         height: fh,
         wireframes: false,
         background: 'transparent',
-        pixelRatio: window.devicePixelRatio || 1,
+        // Retina (devicePixelRatio=3) のまま使うと毎フレーム描画ピクセルが
+        // CSS の 9 倍になり、スマホで端末が顕著に発熱する。
+        // 1.5 にクランプしても見た目はほぼ変わらず、GPU/CPU 負荷を大幅に下げられる。
+        pixelRatio: Math.min(1.5, window.devicePixelRatio || 1),
       },
     });
 
@@ -120,7 +123,21 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     renderRef.current = render;
     runnerRef.current = runner;
 
+    // タブ・アプリ非アクティブ時は物理計算もレンダリングも止めて発熱・電池消費を抑える。
+    // 復帰時はそのまま再開（経過時間で大幅にズレないよう Runner の dt に頼る）。
+    const onVisibility = () => {
+      if (document.hidden) {
+        Matter.Runner.stop(runner);
+        Matter.Render.stop(render);
+      } else {
+        Matter.Render.run(render);
+        Matter.Runner.run(runner, engine);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       Matter.Runner.stop(runner);
       Matter.Render.stop(render);
       Matter.World.clear(engine.world, false);

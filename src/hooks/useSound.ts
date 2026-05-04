@@ -27,12 +27,13 @@ export const useSound = (): UseSoundResult => {
     setIsSoundOn(loadIsSoundOn());
   }, []);
 
-  // 効果音バッファを kind ごとに 1 度だけロードしておく
+  // 効果音バッファを kind ごとに 1 度だけロードしておく（インスタンス使い回し）
   useEffect(() => {
     const buffers: Partial<Record<SoundKind, HTMLAudioElement>> = {};
     for (const [kind, path] of Object.entries(SOUND_PATHS) as [SoundKind, string][]) {
       const audio = new Audio(resolveSoundPath(path));
       audio.preload = 'auto';
+      audio.volume = 0.7;
       buffers[kind] = audio;
     }
     buffersRef.current = buffers;
@@ -55,13 +56,14 @@ export const useSound = (): UseSoundResult => {
   const play = useCallback(
     (kind: SoundKind) => {
       if (!isSoundOn) return;
-      const base = buffersRef.current[kind];
-      if (!base) return;
-      // 連続合体で重なって鳴らせるよう毎回 cloneNode で発火
-      const clone = base.cloneNode() as HTMLAudioElement;
-      clone.volume = 0.7;
+      const audio = buffersRef.current[kind];
+      if (!audio) return;
+      // 単一インスタンスを使い回す：再生中なら巻き戻して即座に鳴らし直す。
+      // 連鎖合体で大量の Audio を生成しないので GC 負荷もメモリも抑えられる。
+      audio.pause();
+      audio.currentTime = 0;
       // 自動再生制限・ファイル未配置・decode エラーなどは握りつぶす
-      clone.play().catch(() => {});
+      audio.play().catch(() => {});
     },
     [isSoundOn]
   );

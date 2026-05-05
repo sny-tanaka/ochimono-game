@@ -1,27 +1,27 @@
 if (!self.define) {
   let e,
     i = {};
-  const s = (s, n) => (
-    (s = new URL(s + '.js', n).href),
-    i[s] ||
+  const n = (n, s) => (
+    (n = new URL(n + '.js', s).href),
+    i[n] ||
       new Promise((i) => {
         if ('document' in self) {
           const e = document.createElement('script');
-          ((e.src = s), (e.onload = i), document.head.appendChild(e));
-        } else ((e = s), importScripts(s), i());
+          ((e.src = n), (e.onload = i), document.head.appendChild(e));
+        } else ((e = n), importScripts(n), i());
       }).then(() => {
-        let e = i[s];
-        if (!e) throw new Error(`Module ${s} didn’t register its module`);
+        let e = i[n];
+        if (!e) throw new Error(`Module ${n} didn’t register its module`);
         return e;
       })
   );
-  self.define = (n, r) => {
-    const l = e || ('document' in self ? document.currentScript.src : '') || location.href;
-    if (i[l]) return;
-    let a = {};
-    const d = (e) => s(e, l),
-      f = { module: { uri: l }, exports: a, require: d };
-    i[l] = Promise.all(n.map((e) => f[e] || d(e))).then((e) => (r(...e), a));
+  self.define = (s, r) => {
+    const a = e || ('document' in self ? document.currentScript.src : '') || location.href;
+    if (i[a]) return;
+    let l = {};
+    const d = (e) => n(e, a),
+      o = { module: { uri: a }, exports: l, require: d };
+    i[a] = Promise.all(s.map((e) => o[e] || d(e))).then((e) => (r(...e), l));
   };
 }
 define(['./workbox-1ef09536'], function (e) {
@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '4f421d59f471a8c2037320cb3b92818c' },
+        { url: 'index.html', revision: '4ad769b8070241581723eba26dc23503' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'sounds/punyu.mp3', revision: 'a36dc54f82e9199637f75dad46b2d7c9' },
@@ -47,7 +47,7 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'images/gumi/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
         { url: 'assets/workbox-window.prod.es5-BIl4cyR9.js', revision: null },
         { url: 'assets/index-CueHcJdm.css', revision: null },
-        { url: 'assets/index-BHsMwglg.js', revision: null },
+        { url: 'assets/index-B6NUcjoo.js', revision: null },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'robots.txt', revision: 'fa1ded1ed7c11438a9b0385b1e112850' },

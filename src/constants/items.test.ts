@@ -68,7 +68,7 @@ describe('itemForFieldWidth', () => {
 
   test('themeId を渡すと svgPath がそのテーマのディレクトリ配下になる', () => {
     const item = itemForFieldWidth(7, REFERENCE_FIELD_WIDTH, 'gumi');
-    expect(item.svgPath).toBe('images/other/level07.png');
+    expect(item.svgPath).toBe('images/gumi/level07.png');
   });
 
   test('同じ (level, fieldWidth, themeId) は同一参照を返す（メモ化）', () => {

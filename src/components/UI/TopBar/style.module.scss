@@ -15,13 +15,31 @@
 .right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.version {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(74, 51, 130, 0.6);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
+.settings {
+  appearance: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #6b4fa0;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(107, 79, 160, 0.12);
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+
+  &:hover {
+    background: #fff;
+  }
+  &:active {
+    transform: scale(0.92);
+  }
 }

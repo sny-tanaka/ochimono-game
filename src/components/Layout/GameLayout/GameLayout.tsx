@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import styles from './style.module.scss';
 
@@ -8,6 +8,7 @@ import { GameOverScreen } from '@/components/Overlay/GameOverScreen/GameOverScre
 import { MagnetSelectingOverlay } from '@/components/Overlay/MagnetSelectingOverlay/MagnetSelectingOverlay';
 import { SkillEffectOverlay } from '@/components/Overlay/SkillEffectOverlay/SkillEffectOverlay';
 import { StartScreen } from '@/components/Overlay/StartScreen/StartScreen';
+import { SettingsDrawer } from '@/components/UI/SettingsDrawer/SettingsDrawer';
 import { SkillButton } from '@/components/UI/SkillButton/SkillButton';
 import { SkillMenu } from '@/components/UI/SkillMenu/SkillMenu';
 import { TopBar } from '@/components/UI/TopBar/TopBar';
@@ -17,6 +18,9 @@ type Size = { width: number; height: number };
 
 const GameContent = ({ size }: { size: Size }) => {
   const game = useGame({ fieldWidth: size.width, fieldHeight: size.height });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const openSettings = useCallback(() => setIsSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
 
   return (
     <>
@@ -24,10 +28,7 @@ const GameContent = ({ size }: { size: Size }) => {
         score={game.score}
         bestScore={game.bestScore}
         nextItem={game.nextItem}
-        isSoundOn={game.isSoundOn}
-        onToggleSound={game.toggleSound}
-        themeId={game.themeId}
-        onChangeTheme={game.setThemeId}
+        onOpenSettings={openSettings}
       />
       <main className={styles.main}>
         <div
@@ -76,6 +77,14 @@ const GameContent = ({ size }: { size: Size }) => {
         open={game.isSkillMenuOpen}
         onSelect={game.selectSkill}
         onClose={game.closeSkillMenu}
+      />
+      <SettingsDrawer
+        open={isSettingsOpen}
+        onClose={closeSettings}
+        themeId={game.themeId}
+        onChangeTheme={game.setThemeId}
+        isSoundOn={game.isSoundOn}
+        onToggleSound={game.toggleSound}
       />
     </>
   );

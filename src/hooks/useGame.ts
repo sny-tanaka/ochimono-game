@@ -15,7 +15,7 @@ import {
   MAGNET_TARGET_COLLISION_MASK,
   PHYSICS,
 } from '@/constants/physics';
-import { gaugeGainForMerge, SKILL, type SkillKind } from '@/constants/skill';
+import { gaugeGainForMerge, SKILL, skillCostPoints, type SkillKind } from '@/constants/skill';
 import { THEMES, type ThemeId } from '@/constants/themes';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
@@ -91,8 +91,12 @@ export type UseGameResult = {
   // 必殺技ゲージ（0..SKILL.gaugeMax）
   skillGauge: number;
   skillGaugeMax: number;
-  // ゲージ満タンで true。発動するまでこの値は変わらない。
-  isSkillReady: boolean;
+  skillSegmentMax: number;
+  skillSegmentCount: number;
+  // メニューを開ける状態（最低 1 セグメント以上）
+  canOpenSkillMenu: boolean;
+  // 各必殺技ごとの発動可否（コスト充足）
+  canUseSkill: Record<SkillKind, boolean>;
   // 必殺技選択メニューの表示状態
   isSkillMenuOpen: boolean;
   openSkillMenu: () => void;
@@ -190,6 +194,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const [isMagnetSelecting, setIsMagnetSelecting] = useState(false);
   const isMagnetSelectingRef = useRef(false);
   const [isGravityFlipped, setIsGravityFlipped] = useState(false);
+  // 反転中 + 叩きつけ中は天井に張り付いたアイテムでゲームオーバーラインが発火しないよう、
+  // afterUpdate からも参照できる ref を別管理する。発動中は isDanger 判定を skip する。
+  const gravitySkillActiveRef = useRef(false);
 
   // 発動中の必殺技を一意に識別する（多重発動防止）
   const activeSkillRef = useRef<SkillKind | null>(null);
@@ -274,11 +281,11 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       },
     });
 
-    const { ground, leftWall, rightWall } = createWalls(fw, fh);
-    [ground, leftWall, rightWall].forEach((w) => {
+    const { ground, leftWall, rightWall, ceiling } = createWalls(fw, fh);
+    [ground, leftWall, rightWall, ceiling].forEach((w) => {
       w.render.visible = false;
     });
-    Matter.World.add(engine.world, [ground, leftWall, rightWall]);
+    Matter.World.add(engine.world, [ground, leftWall, rightWall, ceiling]);
 
     Matter.Render.run(render);
     const runner = Matter.Runner.create();
@@ -454,6 +461,18 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       }
 
       if (statusRef.current !== 'playing') return;
+      // 重力反転 / 叩きつけ中は天井張り付き等で誤判定が出るのでゲームオーバー検査を skip。
+      if (gravitySkillActiveRef.current) {
+        // 発動前から進んでいた危機状態カウントダウンも一旦解除する
+        if (gameOverDangerSinceRef.current !== null) {
+          gameOverDangerSinceRef.current = null;
+          if (lastCountdownRef.current !== null) {
+            lastCountdownRef.current = null;
+            setGameOverCountdown(null);
+          }
+        }
+        return;
+      }
       // afterUpdate は ~60Hz で呼ばれる。ゲームオーバー判定は 6 ティックに 1 度（≒ 10Hz）。
       tick = (tick + 1) % 6;
       if (tick !== 0) return;
@@ -540,9 +559,12 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     setIsMagnetSelecting(next);
   }, []);
 
-  const consumeGauge = useCallback(() => {
-    setSkillGaugeBoth(0);
-  }, [setSkillGaugeBoth]);
+  const consumeGaugeBy = useCallback(
+    (amount: number) => {
+      setSkillGaugeBoth(Math.max(0, skillGaugeRef.current - amount));
+    },
+    [setSkillGaugeBoth]
+  );
 
   // シェイク：全アイテムにランダムな衝撃を与える
   const activateShake = useCallback(() => {
@@ -564,22 +586,67 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     activeSkillRef.current = null;
   }, []);
 
-  // 重力反転：3 秒だけ engine.gravity.y を反転、タイマーで戻す
+  // 重力反転：3 秒だけ engine.gravity.y を反転、タイマーで戻す。
+  // 反転中は body の frictionAir を一時的に上げて「ふわふわ漂う」感じにする。
+  // 反転終了直後は slamDurationMs の間、重力を増幅 + 空気抵抗ゼロにして
+  // アイテムを床に叩きつけて大きくバウンドさせる。
   const activateGravityFlip = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
     if (gravityFlipTimerRef.current !== null) return; // 多重発動禁止
     activeSkillRef.current = 'gravityFlip';
-    const original = engine.gravity.y;
-    engine.gravity.y = original * SKILL.gravityFlip.multiplier;
+    gravitySkillActiveRef.current = true;
+    const originalGravity = PHYSICS.gravityY;
+    engine.gravity.y = originalGravity * SKILL.gravityFlip.multiplier;
+    // 各 body の元 frictionAir / restitution を覚えておいて、発動終了時に戻す。
+    const originalAir = new Map<Matter.Body, number>();
+    const originalRestitution = new Map<Matter.Body, number>();
+    for (const body of itemBodiesRef.current) {
+      originalAir.set(body, body.frictionAir);
+      originalRestitution.set(body, body.restitution);
+      body.frictionAir = SKILL.gravityFlip.frictionAir;
+      // 床 / 壁の静止摩擦で動かない body を剥がすため、上向きの初速を一律で注入。
+      Matter.Body.setVelocity(body, {
+        x: body.velocity.x,
+        y: SKILL.gravityFlip.liftKickVelocity,
+      });
+    }
     setIsGravityFlipped(true);
     playSoundRef.current('special');
     gravityFlipTimerRef.current = window.setTimeout(() => {
+      // ─── 叩きつけフェーズ：重力を強めて空気抵抗を切る + 反発係数を上書き ───
       const e = engineRef.current;
-      if (e) e.gravity.y = original;
-      setIsGravityFlipped(false);
-      gravityFlipTimerRef.current = null;
-      if (activeSkillRef.current === 'gravityFlip') activeSkillRef.current = null;
+      if (e) e.gravity.y = originalGravity * SKILL.gravityFlip.slamGravityMultiplier;
+      for (const body of itemBodiesRef.current) {
+        body.frictionAir = SKILL.gravityFlip.slamFrictionAir;
+        // restitution は body 生成時に Map に入れた個別値を覚えてあるので、
+        // 発動中に追加された body も含めて改めて記録 → 上書き
+        if (!originalRestitution.has(body)) {
+          originalRestitution.set(body, body.restitution);
+        }
+        body.restitution = SKILL.gravityFlip.slamRestitution;
+        // 天井 / 壁の摩擦で張り付いた body も剥がして落ちるよう、下方向の初速を注入。
+        Matter.Body.setVelocity(body, {
+          x: body.velocity.x,
+          y: SKILL.gravityFlip.slamKickVelocity,
+        });
+      }
+      setIsGravityFlipped(false); // オーバーレイ演出は終了
+      playSoundRef.current('special');
+
+      gravityFlipTimerRef.current = window.setTimeout(() => {
+        // ─── 通常重力に復元 ───
+        const e2 = engineRef.current;
+        if (e2) e2.gravity.y = originalGravity;
+        for (const body of itemBodiesRef.current) {
+          // 発動中に追加で生まれた body は Map に無いので Matter デフォルトにフォールバック
+          body.frictionAir = originalAir.get(body) ?? 0.01;
+          body.restitution = originalRestitution.get(body) ?? 0.4;
+        }
+        gravityFlipTimerRef.current = null;
+        gravitySkillActiveRef.current = false;
+        if (activeSkillRef.current === 'gravityFlip') activeSkillRef.current = null;
+      }, SKILL.gravityFlip.slamDurationMs);
     }, SKILL.gravityFlip.durationMs);
   }, []);
 
@@ -599,35 +666,37 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const selectMagnetTarget = useCallback(
     (clientX: number, clientY: number) => {
       if (!isMagnetSelectingRef.current) return;
-      // クリック座標 → フィールド内ローカル座標は呼び出し側で計算済みの想定。
-      // ここでは座標を Matter.Query.point に投げて body を引く。
       const bodies = Array.from(itemBodiesRef.current);
       const hits = Matter.Query.point(bodies, { x: clientX, y: clientY });
-      if (hits.length === 0) {
-        // ハズレ：選択モード継続（キャンセルしたければユーザーがキャンセルボタン）
-        return;
-      }
-      const data = getItemDataFromBody(hits[0]);
+      if (hits.length === 0) return; // ハズレ：選択モード継続
+      const tapped = hits[0];
+      const data = getItemDataFromBody(tapped);
       if (!data) return;
-      const sameLevelTargets = bodies.filter((b) => getItemDataFromBody(b)?.level === data.level);
-      if (sameLevelTargets.length < 2) {
-        // 同レベルが 1 個しか無い → 引き寄せ意味なし。選択モード継続。
-        return;
-      }
-      // 対象 body を MAGNET_TARGET カテゴリに切り替える（非対象アイテムを擦り抜けて飛んでいけるように）。
-      // 発動終了時に必ず元のカテゴリに戻すので、必ず endMagnet 経路を通すこと。
-      for (const b of sameLevelTargets) tagAsMagnetTarget(b);
+      // 同レベルの「タップ対象を除いた」候補から 1 個だけランダムに選ぶ。
+      // 全員引き寄せだと強すぎたので、1 対 1 のお見合いに制限する。
+      const others = bodies.filter((b) => {
+        if (b === tapped) return false;
+        const d = getItemDataFromBody(b);
+        return !!d && !d.consumed && d.level === data.level;
+      });
+      if (others.length === 0) return; // 同レベルが他にいない → 選択モード継続
+      const partner = others[Math.floor(Math.random() * others.length)];
+      // タップ対象 + パートナーの 2 体だけ MAGNET_TARGET カテゴリに切り替える。
+      // 非対象アイテムを擦り抜けて飛べるようになる。発動終了時に必ず元に戻す。
+      tagAsMagnetTarget(tapped);
+      tagAsMagnetTarget(partner);
       magnetLevelRef.current = data.level;
       magnetEndAtRef.current = performance.now() + SKILL.magnet.durationMs;
       setIsMagnetSelectingBoth(false);
       playSoundRef.current('special');
-      consumeGauge();
+      consumeGaugeBy(skillCostPoints('magnet'));
     },
-    [consumeGauge, setIsMagnetSelectingBoth, tagAsMagnetTarget]
+    [consumeGaugeBy, setIsMagnetSelectingBoth, tagAsMagnetTarget]
   );
 
   const openSkillMenu = useCallback(() => {
-    if (skillGaugeRef.current < SKILL.gaugeMax) return;
+    // 1 セグメント以上溜まっていればメニューを開ける（中身でコストが足りない技は disabled に）。
+    if (skillGaugeRef.current < SKILL.segmentMax) return;
     if (statusRef.current !== 'playing') return;
     setIsSkillMenuOpen(true);
   }, []);
@@ -638,20 +707,21 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
 
   const selectSkill = useCallback(
     (kind: SkillKind) => {
-      if (skillGaugeRef.current < SKILL.gaugeMax) return;
+      const cost = skillCostPoints(kind);
+      if (skillGaugeRef.current < cost) return;
       setIsSkillMenuOpen(false);
       if (kind === 'shake') {
         activateShake();
-        consumeGauge();
+        consumeGaugeBy(cost);
       } else if (kind === 'gravityFlip') {
         activateGravityFlip();
-        consumeGauge();
+        consumeGaugeBy(cost);
       } else if (kind === 'magnet') {
         // マグネットだけは対象選択完了時にゲージ消費する（キャンセル可能なため）
         activateMagnet();
       }
     },
-    [activateShake, activateGravityFlip, activateMagnet, consumeGauge]
+    [activateShake, activateGravityFlip, activateMagnet, consumeGaugeBy]
   );
 
   // 必殺技関連の全 timer / state を強制クリア（restart / 引退時に使う）
@@ -663,6 +733,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     const engine = engineRef.current;
     if (engine) engine.gravity.y = PHYSICS.gravityY;
     setIsGravityFlipped(false);
+    gravitySkillActiveRef.current = false;
     // マグネット中だった body のカテゴリを通常に戻す
     untagAllMagnetTargets();
     magnetEndAtRef.current = null;
@@ -773,7 +844,14 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     gameOverLineY,
     skillGauge,
     skillGaugeMax: SKILL.gaugeMax,
-    isSkillReady: skillGauge >= SKILL.gaugeMax,
+    skillSegmentMax: SKILL.segmentMax,
+    skillSegmentCount: SKILL.segmentCount,
+    canOpenSkillMenu: skillGauge >= SKILL.segmentMax,
+    canUseSkill: {
+      shake: skillGauge >= skillCostPoints('shake'),
+      gravityFlip: skillGauge >= skillCostPoints('gravityFlip'),
+      magnet: skillGauge >= skillCostPoints('magnet'),
+    },
     isSkillMenuOpen,
     openSkillMenu,
     closeSkillMenu,

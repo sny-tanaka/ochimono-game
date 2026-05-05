@@ -49,7 +49,12 @@ export const getItemDataFromBody = (body: Matter.Body): ItemBodyData | undefined
 export const createWalls = (
   width: number,
   height: number
-): { ground: Matter.Body; leftWall: Matter.Body; rightWall: Matter.Body } => {
+): {
+  ground: Matter.Body;
+  leftWall: Matter.Body;
+  rightWall: Matter.Body;
+  ceiling: Matter.Body;
+} => {
   const t = PHYSICS.wallThickness;
   const wallOptions: Matter.IChamferableBodyDefinition = {
     isStatic: true,
@@ -66,8 +71,15 @@ export const createWalls = (
   const ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width + t * 2, t, wallOptions);
   const leftWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, wallOptions);
   const rightWall = Matter.Bodies.rectangle(width + t / 2, height / 2, t, height * 2, wallOptions);
+  // 天井壁。重力反転中にアイテムが画面外へ吹き飛んでロストするのを防ぐ。
+  // 反発係数 0 にして、ぶつかっても弾まずに滑らかに沿うようにする
+  // （弾むとアイテムが上半分から下に押し戻されてしまう）。
+  const ceiling = Matter.Bodies.rectangle(width / 2, -t / 2, width + t * 2, t, {
+    ...wallOptions,
+    restitution: 0,
+  });
 
-  return { ground, leftWall, rightWall };
+  return { ground, leftWall, rightWall, ceiling };
 };
 
 // アイテムの中点座標

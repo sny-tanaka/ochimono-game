@@ -28,21 +28,31 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
+  // ::before / ::after の派手エフェクトより前面に出すため
+  z-index: 1;
 }
 
 .gauge_track {
-  fill: rgba(255, 255, 255, 0.85);
+  fill: none;
   stroke: rgba(107, 79, 160, 0.25);
   stroke-width: 6;
+  // 端を round にすると弧の終点に半円が残って「謎の丸」に見えるので flat に。
+  stroke-linecap: butt;
 }
 
 .gauge_fill {
   fill: none;
   stroke: #b48dff;
   stroke-width: 6;
-  stroke-linecap: round;
-  // strokeDashoffset を変える時に滑らかに見せる
-  transition: stroke-dashoffset 0.25s ease-out;
+  // fill 側も butt（ratio=0 のときに linecap=round が小さな丸を描いてしまうのを防ぐ）
+  stroke-linecap: butt;
+  transition: stroke-dasharray 0.25s ease-out;
+}
+
+// セグメント満タンの個別表示（金色 + 影）
+.gauge_fill_full {
+  stroke: #ffd740;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 64, 0.7));
 }
 
 .icon {
@@ -52,28 +62,55 @@
   transition:
     filter 0.2s ease,
     transform 0.2s ease;
-  z-index: 1;
+  z-index: 2;
 }
 
+// 1 セグメント以上溜まっていれば（= canOpen=true）アイコンが反応する。
 .ready {
-  .gauge_fill {
-    stroke: #ffd740;
-    filter: drop-shadow(0 0 6px rgba(255, 215, 64, 0.7));
-    animation: ready_pulse 1.4s ease-in-out infinite;
-  }
   .icon {
     filter: none;
     animation: icon_bounce 1.4s ease-in-out infinite;
   }
 }
 
-@keyframes ready_pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 6px rgba(255, 215, 64, 0.7));
+// 全 3 セグメント満タン時の派手なエフェクト：
+// ボタン外周にレインボー光輪 + アイコンを大きくスケールパルス。
+.fully_ready {
+  // 外周のレインボー光輪（::before）と内側の金色光（::after）の二重リング
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    pointer-events: none;
   }
-  50% {
-    filter: drop-shadow(0 0 14px rgba(255, 215, 64, 1));
+  &::before {
+    background: conic-gradient(
+      from 0deg,
+      #ff8fab,
+      #ffd740,
+      #b48dff,
+      #64d8ff,
+      #ff8fab
+    );
+    filter: blur(6px);
+    opacity: 0.8;
+    animation: rainbow_spin 2.4s linear infinite;
+    z-index: 0;
+  }
+  &::after {
+    inset: -2px;
+    box-shadow:
+      0 0 10px rgba(255, 215, 64, 0.9),
+      0 0 22px rgba(255, 215, 64, 0.6);
+    animation: gold_pulse 1.2s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  .icon {
+    animation: icon_super_bounce 0.9s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(255, 215, 64, 0.9));
   }
 }
 
@@ -84,5 +121,38 @@
   }
   50% {
     transform: scale(1.15);
+  }
+}
+
+@keyframes icon_super_bounce {
+  0%,
+  100% {
+    transform: scale(1) rotate(-4deg);
+  }
+  50% {
+    transform: scale(1.3) rotate(4deg);
+  }
+}
+
+@keyframes rainbow_spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gold_pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgba(255, 215, 64, 0.9),
+      0 0 22px rgba(255, 215, 64, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(255, 215, 64, 1),
+      0 0 38px rgba(255, 215, 64, 0.85);
   }
 }

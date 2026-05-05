@@ -12,4 +12,7 @@ export const PHYSICS = {
   restingVelocityThreshold: 0.5,
   // 落下直後の判定無効時間（誤検知防止）
   gameOverGracePeriodMs: 1000,
+  // ゲームオーバーラインを超え続けた状態が何 ms 続いたらゲームオーバー判定にするか。
+  // シェイクや重力反転で一時的にラインを越えるのを許容するための猶予。
+  gameOverDangerLimitMs: 5000,
 } as const;

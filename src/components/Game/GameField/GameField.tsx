@@ -19,6 +19,9 @@ type Props = {
   onDrop: (xRatio: number) => void;
   // useGame が合体時に effect を流し込むためのハンドル。
   mergeEffectRef: React.RefObject<MergeEffectHandle | null>;
+  // マグネット必殺技の対象選択モード。タップ位置を field 内ローカル座標で通知する。
+  isMagnetSelecting: boolean;
+  onMagnetSelect: (localX: number, localY: number) => void;
 };
 
 const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
@@ -32,6 +35,8 @@ export const GameField = ({
   canInteract,
   onDrop,
   mergeEffectRef,
+  isMagnetSelecting,
+  onMagnetSelect,
 }: Props) => {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<DropIndicatorHandle | null>(null);
@@ -96,13 +101,18 @@ export const GameField = ({
     };
   }, []);
 
+  // マグネット選択中はドロップを抑制する。Indicator も非表示にする。
+  const canDrop = canInteract && !isMagnetSelecting;
+
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!canInteract) return;
+    if (isMagnetSelecting) return; // 選択モードは pointerUp 側で処理
+    if (!canDrop) return;
     updatePointerFromEvent(e.clientX);
     surfaceRef.current?.setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isMagnetSelecting) return;
     if (e.buttons === 0 && e.pointerType === 'mouse') {
       // マウスホバーでも追従
       updatePointerFromEvent(e.clientX);
@@ -112,7 +122,15 @@ export const GameField = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!canInteract) return;
+    if (isMagnetSelecting) {
+      // タップ位置を field ローカル座標に変換して通知
+      const surface = surfaceRef.current;
+      if (!surface) return;
+      const rect = surface.getBoundingClientRect();
+      onMagnetSelect(e.clientX - rect.left, e.clientY - rect.top);
+      return;
+    }
+    if (!canDrop) return;
     updatePointerFromEvent(e.clientX);
     onDrop(pointerXRatioRef.current);
     surfaceRef.current?.releasePointerCapture(e.pointerId);
@@ -141,7 +159,7 @@ export const GameField = ({
         style={{ top: `${gameOverLineY}px` }}
         aria-hidden="true"
       />
-      {canInteract ? (
+      {canDrop ? (
         <DropIndicator
           ref={indicatorRef}
           initialX={initialIndicatorX}

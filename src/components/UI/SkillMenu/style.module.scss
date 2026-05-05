@@ -1,0 +1,122 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 10, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fade_in 0.18s ease-out forwards;
+}
+
+.menu {
+  width: min(360px, calc(100vw - 32px));
+  background: linear-gradient(180deg, #fff 0%, #fff7fc 100%);
+  border-radius: 20px;
+  padding: 20px 16px 16px;
+  box-shadow: 0 12px 32px rgba(40, 10, 80, 0.3);
+  animation: pop_in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.title {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #6b4fa0;
+  letter-spacing: 0.06em;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choice {
+  appearance: none;
+  border: 2px solid rgba(180, 141, 255, 0.4);
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    'icon label'
+    'icon desc';
+  align-items: center;
+  gap: 2px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.12s,
+    border-color 0.12s,
+    background 0.12s;
+
+  &:active {
+    transform: scale(0.97);
+  }
+  &:hover {
+    border-color: #b48dff;
+    background: #fdfbff;
+  }
+}
+
+.choice_icon {
+  grid-area: icon;
+  font-size: 32px;
+  line-height: 1;
+  text-align: center;
+}
+
+.choice_label {
+  grid-area: label;
+  font-size: 16px;
+  font-weight: 800;
+  color: #4a3382;
+}
+
+.choice_desc {
+  grid-area: desc;
+  font-size: 12px;
+  color: rgba(74, 51, 130, 0.8);
+}
+
+.cancel {
+  margin-top: 12px;
+  width: 100%;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(74, 51, 130, 0.7);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 10px;
+
+  &:hover {
+    background: rgba(180, 141, 255, 0.12);
+  }
+}
+
+@keyframes fade_in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop_in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

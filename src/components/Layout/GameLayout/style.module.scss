@@ -27,3 +27,10 @@
   position: relative;
   overflow: hidden;
 }
+
+.skill_button_wrapper {
+  position: absolute;
+  right: 16px;
+  bottom: 24px;
+  z-index: 15;
+}

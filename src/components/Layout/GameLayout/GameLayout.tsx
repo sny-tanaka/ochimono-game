@@ -3,8 +3,13 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import styles from './style.module.scss';
 
 import { GameField } from '@/components/Game/GameField/GameField';
+import { CountdownOverlay } from '@/components/Overlay/CountdownOverlay/CountdownOverlay';
 import { GameOverScreen } from '@/components/Overlay/GameOverScreen/GameOverScreen';
+import { MagnetSelectingOverlay } from '@/components/Overlay/MagnetSelectingOverlay/MagnetSelectingOverlay';
+import { SkillEffectOverlay } from '@/components/Overlay/SkillEffectOverlay/SkillEffectOverlay';
 import { StartScreen } from '@/components/Overlay/StartScreen/StartScreen';
+import { SkillButton } from '@/components/UI/SkillButton/SkillButton';
+import { SkillMenu } from '@/components/UI/SkillMenu/SkillMenu';
 import { TopBar } from '@/components/UI/TopBar/TopBar';
 import { useGame } from '@/hooks/useGame';
 
@@ -38,7 +43,24 @@ const GameContent = ({ size }: { size: Size }) => {
             mergeEffectRef={game.mergeEffectRef}
             canInteract={game.status === 'playing'}
             onDrop={game.drop}
+            isMagnetSelecting={game.isMagnetSelecting}
+            onMagnetSelect={game.selectMagnetTarget}
           />
+          <SkillEffectOverlay effect={game.isGravityFlipped ? 'gravityFlip' : null} />
+          <MagnetSelectingOverlay
+            active={game.isMagnetSelecting}
+            onCancel={game.cancelMagnetSelecting}
+          />
+          <CountdownOverlay seconds={game.status === 'playing' ? game.gameOverCountdown : null} />
+          {game.status === 'playing' ? (
+            <div className={styles.skill_button_wrapper}>
+              <SkillButton
+                ratio={game.skillGauge / game.skillGaugeMax}
+                isReady={game.isSkillReady}
+                onClick={game.openSkillMenu}
+              />
+            </div>
+          ) : null}
           {game.status === 'idle' ? <StartScreen onStart={game.start} /> : null}
           {game.status === 'gameover' ? (
             <GameOverScreen
@@ -50,6 +72,11 @@ const GameContent = ({ size }: { size: Size }) => {
           ) : null}
         </div>
       </main>
+      <SkillMenu
+        open={game.isSkillMenuOpen}
+        onSelect={game.selectSkill}
+        onClose={game.closeSkillMenu}
+      />
     </>
   );
 };

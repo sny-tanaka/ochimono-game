@@ -16,3 +16,21 @@ export const PHYSICS = {
   // シェイクや重力反転で一時的にラインを越えるのを許容するための猶予。
   gameOverDangerLimitMs: 5000,
 } as const;
+
+// Matter.js の衝突カテゴリ。デフォルトは category=0x0001/mask=0xFFFFFFFF だが
+// マグネット必殺技で「対象アイテムだけ非対象アイテムを擦り抜ける」を実現したいので
+// 役割ごとにビットを分けて管理する。
+export const COLLISION_CATEGORY = {
+  wall: 0x0001,
+  item: 0x0002,
+  // マグネット発動中の対象アイテム。壁と他の対象には衝突するが、非対象アイテムには衝突しない。
+  magnetTarget: 0x0004,
+} as const;
+
+// 通常アイテムが衝突する対象（= 全部）
+export const ITEM_COLLISION_MASK =
+  COLLISION_CATEGORY.wall | COLLISION_CATEGORY.item | COLLISION_CATEGORY.magnetTarget;
+
+// マグネット対象アイテムが衝突する対象（= 壁と他の対象アイテム。非対象 item は無視）
+export const MAGNET_TARGET_COLLISION_MASK =
+  COLLISION_CATEGORY.wall | COLLISION_CATEGORY.magnetTarget;

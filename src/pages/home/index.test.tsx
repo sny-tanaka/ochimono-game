@@ -25,6 +25,18 @@ vi.mock('@/hooks/useGame', () => ({
     fieldWidth: 360,
     fieldHeight: 560,
     gameOverLineY: 80,
+    skillGauge: 0,
+    skillGaugeMax: 100,
+    isSkillReady: false,
+    isSkillMenuOpen: false,
+    openSkillMenu: () => {},
+    closeSkillMenu: () => {},
+    selectSkill: () => {},
+    isMagnetSelecting: false,
+    cancelMagnetSelecting: () => {},
+    selectMagnetTarget: () => {},
+    isGravityFlipped: false,
+    gameOverCountdown: null,
   }),
 }));
 

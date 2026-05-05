@@ -10,6 +10,7 @@ import {
   MAX_ITEM_LEVEL,
 } from '@/constants/items';
 import { PHYSICS } from '@/constants/physics';
+import { gaugeGainForMerge, SKILL, type SkillKind } from '@/constants/skill';
 import { THEMES, type ThemeId } from '@/constants/themes';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
@@ -82,6 +83,24 @@ export type UseGameResult = {
   fieldWidth: number;
   fieldHeight: number;
   gameOverLineY: number;
+  // 必殺技ゲージ（0..SKILL.gaugeMax）
+  skillGauge: number;
+  skillGaugeMax: number;
+  // ゲージ満タンで true。発動するまでこの値は変わらない。
+  isSkillReady: boolean;
+  // 必殺技選択メニューの表示状態
+  isSkillMenuOpen: boolean;
+  openSkillMenu: () => void;
+  closeSkillMenu: () => void;
+  selectSkill: (kind: SkillKind) => void;
+  // マグネット必殺技：対象選択モード（フィールド上のアイテムタップ待機）
+  isMagnetSelecting: boolean;
+  cancelMagnetSelecting: () => void;
+  selectMagnetTarget: (clientX: number, clientY: number) => void;
+  // 重力反転中フラグ。エフェクトオーバーレイ表示用。
+  isGravityFlipped: boolean;
+  // ゲームオーバーまでの残り秒数（ライン超過状態で 5..1 を返す）。null なら非危機状態。
+  gameOverCountdown: number | null;
 };
 
 export type UseGameOptions = {
@@ -141,6 +160,46 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   playSoundRef.current = sound.play;
   const finalizeRef = useRef(score.finalize);
   finalizeRef.current = score.finalize;
+
+  // ─── 必殺技関連 state / ref ───────────────────────────────────────────
+  const [skillGauge, setSkillGauge] = useState(0);
+  // collision listener から最新値を読みつつ、setSkillGauge も走らせる必要があるので両持ち。
+  const skillGaugeRef = useRef(0);
+  const setSkillGaugeBoth = useCallback((next: number) => {
+    skillGaugeRef.current = next;
+    setSkillGauge(next);
+  }, []);
+  const addSkillGauge = useCallback(
+    (amount: number) => {
+      const next = Math.min(SKILL.gaugeMax, skillGaugeRef.current + amount);
+      if (next === skillGaugeRef.current) return;
+      setSkillGaugeBoth(next);
+    },
+    [setSkillGaugeBoth]
+  );
+  // handleMerge / collision listener から呼べるよう ref 経由でアクセスする。
+  const addSkillGaugeRef = useRef(addSkillGauge);
+  addSkillGaugeRef.current = addSkillGauge;
+
+  const [isSkillMenuOpen, setIsSkillMenuOpen] = useState(false);
+  const [isMagnetSelecting, setIsMagnetSelecting] = useState(false);
+  const isMagnetSelectingRef = useRef(false);
+  const [isGravityFlipped, setIsGravityFlipped] = useState(false);
+
+  // 発動中の必殺技を一意に識別する（多重発動防止）
+  const activeSkillRef = useRef<SkillKind | null>(null);
+  // 重力反転 / マグネット のタイマー
+  const gravityFlipTimerRef = useRef<number | null>(null);
+  const magnetEndAtRef = useRef<number | null>(null);
+  const magnetLevelRef = useRef<number | null>(null);
+
+  // ─── ゲームオーバー判定（5秒猶予 + カウントダウン） ─────────────────
+  // ライン超過を最初に検出した時刻。null は危機状態でない。
+  const gameOverDangerSinceRef = useRef<number | null>(null);
+  const [gameOverCountdown, setGameOverCountdown] = useState<number | null>(null);
+  // 直近に setState した残り秒数。afterUpdate のたびに setState すると再レンダーが多すぎるので
+  // 値が変わった時だけ commit する。
+  const lastCountdownRef = useRef<number | null>(null);
 
   // ゲームオーバー判定で `Composite.allBodies` を毎ティック走査すると
   // 連打中に高コスト + 配列確保が走るため、アイテム body は自前 Set でも保持する。
@@ -255,10 +314,12 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
 
     let addedScore = 0;
     let isSpecial = false;
+    let gaugeGain = gaugeGainForMerge(mergedLevel);
     if (mergedLevel > MAX_ITEM_LEVEL) {
       // レベル10同士 → 消滅 + ボーナス
       addedScore = calcSpecialEliminationBonus();
       isSpecial = true;
+      gaugeGain += SKILL.bonusOnSpecialElimination;
       playSoundRef.current('special');
     } else {
       const mergedItem = itemForFieldWidth(mergedLevel, fieldWidthRef.current, themeIdRef.current);
@@ -268,10 +329,12 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       itemBodiesRef.current.add(newBody);
       addedScore = calcMergeScore(mergedLevel);
       isSpecial = mergedLevel === MAX_ITEM_LEVEL;
+      if (isSpecial) gaugeGain += SKILL.bonusOnLevel10Created;
       playSoundRef.current(isSpecial ? 'special' : 'merge');
     }
 
     scoreAddRef.current(addedScore);
+    addSkillGaugeRef.current(gaugeGain);
 
     // React state を介さず、命令的レイヤーに直接 effect を流し込む。
     // 連打時に React commit が増えないので画面が固まりにくい。
@@ -295,7 +358,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     };
   }, [handleMerge]);
 
-  // ゲームオーバー監視（afterUpdate）
+  // ゲームオーバー監視 + マグネット引力適用（afterUpdate）
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
@@ -303,14 +366,68 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     const gameOverLineY = PHYSICS.gameOverLineOffset;
     let tick = 0;
 
+    // 危機状態をリセットして UI のカウントダウンも消す
+    const clearDanger = () => {
+      gameOverDangerSinceRef.current = null;
+      if (lastCountdownRef.current !== null) {
+        lastCountdownRef.current = null;
+        setGameOverCountdown(null);
+      }
+    };
+
     const onAfterUpdate = () => {
+      // ── マグネット必殺技：active なら毎フレーム同レベル body を中心に引き寄せる ──
+      if (magnetEndAtRef.current !== null) {
+        const now = performance.now();
+        if (now >= magnetEndAtRef.current) {
+          magnetEndAtRef.current = null;
+          magnetLevelRef.current = null;
+          activeSkillRef.current = null;
+        } else {
+          const targetLevel = magnetLevelRef.current;
+          if (targetLevel !== null) {
+            const targets: Matter.Body[] = [];
+            for (const b of itemBodiesRef.current) {
+              const data = getItemDataFromBody(b);
+              if (data && !data.consumed && data.level === targetLevel) targets.push(b);
+            }
+            if (targets.length >= 2) {
+              let cx = 0;
+              let cy = 0;
+              for (const b of targets) {
+                cx += b.position.x;
+                cy += b.position.y;
+              }
+              cx /= targets.length;
+              cy /= targets.length;
+              for (const b of targets) {
+                const dx = cx - b.position.x;
+                const dy = cy - b.position.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < 1) continue;
+                const f = SKILL.magnet.forceMagnitude * b.mass;
+                Matter.Body.applyForce(b, b.position, {
+                  x: (dx / dist) * f,
+                  y: (dy / dist) * f,
+                });
+              }
+            } else {
+              // 1 個以下なら引き寄せ意味なし、即終了
+              magnetEndAtRef.current = null;
+              magnetLevelRef.current = null;
+              activeSkillRef.current = null;
+            }
+          }
+        }
+      }
+
       if (statusRef.current !== 'playing') return;
-      // afterUpdate は ~60Hz で呼ばれる。毎ティック全 body を走査するのは重いので
-      // 6 ティックに 1 度（≒ 10Hz）だけ判定する。落下後 grace period を考慮しても十分。
+      // afterUpdate は ~60Hz で呼ばれる。ゲームオーバー判定は 6 ティックに 1 度（≒ 10Hz）。
       tick = (tick + 1) % 6;
       if (tick !== 0) return;
 
       const now = performance.now();
+      let isDanger = false;
       // Composite.allBodies(...) は毎回新しい配列を確保するので、自前 Set を反復して回避。
       for (const body of itemBodiesRef.current) {
         const data = getItemDataFromBody(body);
@@ -318,12 +435,35 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         if (now - data.droppedAt < PHYSICS.gameOverGracePeriodMs) continue;
         if (Math.abs(body.velocity.y) > PHYSICS.restingVelocityThreshold) continue;
         if (body.position.y - body.circleRadius! < gameOverLineY) {
-          statusRef.current = 'gameover';
-          setStatus('gameover');
-          const result = finalizeRef.current();
-          playSoundRef.current(result.isNewRecord ? 'highscore' : 'gameover');
-          return;
+          isDanger = true;
+          break;
         }
+      }
+
+      if (!isDanger) {
+        clearDanger();
+        return;
+      }
+
+      // ライン超過状態。最初の検出時刻を記録して 5 秒経過で gameover 確定。
+      if (gameOverDangerSinceRef.current === null) {
+        gameOverDangerSinceRef.current = now;
+      }
+      const elapsed = now - gameOverDangerSinceRef.current;
+      const limit = PHYSICS.gameOverDangerLimitMs;
+      if (elapsed >= limit) {
+        clearDanger();
+        statusRef.current = 'gameover';
+        setStatus('gameover');
+        const result = finalizeRef.current();
+        playSoundRef.current(result.isNewRecord ? 'highscore' : 'gameover');
+        return;
+      }
+      // 残り秒数（5..1）。値が変わった時だけ setState して再レンダーを抑える。
+      const remaining = Math.max(1, Math.ceil((limit - elapsed) / 1000));
+      if (remaining !== lastCountdownRef.current) {
+        lastCountdownRef.current = remaining;
+        setGameOverCountdown(remaining);
       }
     };
 
@@ -361,6 +501,142 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     setThemeIdState(next);
     saveThemeId(next);
   }, []);
+
+  // ─── 必殺技：発動 ─────────────────────────────────────────────────────
+  const setIsMagnetSelectingBoth = useCallback((next: boolean) => {
+    isMagnetSelectingRef.current = next;
+    setIsMagnetSelecting(next);
+  }, []);
+
+  const consumeGauge = useCallback(() => {
+    setSkillGaugeBoth(0);
+  }, [setSkillGaugeBoth]);
+
+  // シェイク：全アイテムにランダムな衝撃を与える
+  const activateShake = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    activeSkillRef.current = 'shake';
+    const { impulseMin, impulseMax, upwardBias } = SKILL.shake;
+    for (const body of itemBodiesRef.current) {
+      const data = getItemDataFromBody(body);
+      if (!data || data.consumed) continue;
+      const angle = Math.random() * Math.PI * 2;
+      const mag = impulseMin + Math.random() * (impulseMax - impulseMin);
+      const fx = Math.cos(angle) * mag * body.mass;
+      // 上方向に少し強くする（負の y が上）
+      const fy = (Math.sin(angle) * mag - upwardBias) * body.mass;
+      Matter.Body.applyForce(body, body.position, { x: fx, y: fy });
+    }
+    playSoundRef.current('special');
+    activeSkillRef.current = null;
+  }, []);
+
+  // 重力反転：3 秒だけ engine.gravity.y を反転、タイマーで戻す
+  const activateGravityFlip = useCallback(() => {
+    const engine = engineRef.current;
+    if (!engine) return;
+    if (gravityFlipTimerRef.current !== null) return; // 多重発動禁止
+    activeSkillRef.current = 'gravityFlip';
+    const original = engine.gravity.y;
+    engine.gravity.y = original * SKILL.gravityFlip.multiplier;
+    setIsGravityFlipped(true);
+    playSoundRef.current('special');
+    gravityFlipTimerRef.current = window.setTimeout(() => {
+      const e = engineRef.current;
+      if (e) e.gravity.y = original;
+      setIsGravityFlipped(false);
+      gravityFlipTimerRef.current = null;
+      if (activeSkillRef.current === 'gravityFlip') activeSkillRef.current = null;
+    }, SKILL.gravityFlip.durationMs);
+  }, []);
+
+  // マグネット：選択中モードに入る。実際の引力は selectMagnetTarget で開始する。
+  const activateMagnet = useCallback(() => {
+    activeSkillRef.current = 'magnet';
+    setIsMagnetSelectingBoth(true);
+  }, [setIsMagnetSelectingBoth]);
+
+  const cancelMagnetSelecting = useCallback(() => {
+    if (!isMagnetSelectingRef.current) return;
+    setIsMagnetSelectingBoth(false);
+    activeSkillRef.current = null;
+    // ゲージは消費していないのでそのまま戻す
+  }, [setIsMagnetSelectingBoth]);
+
+  const selectMagnetTarget = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!isMagnetSelectingRef.current) return;
+      // クリック座標 → フィールド内ローカル座標は呼び出し側で計算済みの想定。
+      // ここでは座標を Matter.Query.point に投げて body を引く。
+      const bodies = Array.from(itemBodiesRef.current);
+      const hits = Matter.Query.point(bodies, { x: clientX, y: clientY });
+      if (hits.length === 0) {
+        // ハズレ：選択モード継続（キャンセルしたければユーザーがキャンセルボタン）
+        return;
+      }
+      const data = getItemDataFromBody(hits[0]);
+      if (!data) return;
+      const sameLevelCount = bodies.filter(
+        (b) => getItemDataFromBody(b)?.level === data.level
+      ).length;
+      if (sameLevelCount < 2) {
+        // 同レベルが 1 個しか無い → 引き寄せ意味なし。選択モード継続。
+        return;
+      }
+      magnetLevelRef.current = data.level;
+      magnetEndAtRef.current = performance.now() + SKILL.magnet.durationMs;
+      setIsMagnetSelectingBoth(false);
+      playSoundRef.current('special');
+      consumeGauge();
+    },
+    [consumeGauge, setIsMagnetSelectingBoth]
+  );
+
+  const openSkillMenu = useCallback(() => {
+    if (skillGaugeRef.current < SKILL.gaugeMax) return;
+    if (statusRef.current !== 'playing') return;
+    setIsSkillMenuOpen(true);
+  }, []);
+
+  const closeSkillMenu = useCallback(() => {
+    setIsSkillMenuOpen(false);
+  }, []);
+
+  const selectSkill = useCallback(
+    (kind: SkillKind) => {
+      if (skillGaugeRef.current < SKILL.gaugeMax) return;
+      setIsSkillMenuOpen(false);
+      if (kind === 'shake') {
+        activateShake();
+        consumeGauge();
+      } else if (kind === 'gravityFlip') {
+        activateGravityFlip();
+        consumeGauge();
+      } else if (kind === 'magnet') {
+        // マグネットだけは対象選択完了時にゲージ消費する（キャンセル可能なため）
+        activateMagnet();
+      }
+    },
+    [activateShake, activateGravityFlip, activateMagnet, consumeGauge]
+  );
+
+  // 必殺技関連の全 timer / state を強制クリア（restart / 引退時に使う）
+  const resetSkillState = useCallback(() => {
+    if (gravityFlipTimerRef.current !== null) {
+      window.clearTimeout(gravityFlipTimerRef.current);
+      gravityFlipTimerRef.current = null;
+    }
+    const engine = engineRef.current;
+    if (engine) engine.gravity.y = PHYSICS.gravityY;
+    setIsGravityFlipped(false);
+    magnetEndAtRef.current = null;
+    magnetLevelRef.current = null;
+    activeSkillRef.current = null;
+    setIsSkillMenuOpen(false);
+    setIsMagnetSelectingBoth(false);
+    setSkillGaugeBoth(0);
+  }, [setIsMagnetSelectingBoth, setSkillGaugeBoth]);
 
   // drop / start / restart はいずれも ref を介して最新の current/next を読むので
   // useCallback の deps を空にできる（参照が安定 → GameField の handler も安定）。
@@ -411,13 +687,17 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const start = useCallback(() => {
     score.reset();
     mergeEffectRef.current?.clear();
+    resetSkillState();
+    gameOverDangerSinceRef.current = null;
+    lastCountdownRef.current = null;
+    setGameOverCountdown(null);
     setCurrentItemSynced(pickRandomDroppable());
     setNextItemSynced(pickRandomDroppable());
     canDropRef.current = true;
     lastDropAtRef.current = 0;
     statusRef.current = 'playing';
     setStatus('playing');
-  }, [score, pickRandomDroppable, setCurrentItemSynced, setNextItemSynced]);
+  }, [score, pickRandomDroppable, resetSkillState, setCurrentItemSynced, setNextItemSynced]);
 
   const restart = useCallback(() => {
     const engine = engineRef.current;
@@ -456,5 +736,17 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     fieldWidth,
     fieldHeight,
     gameOverLineY,
+    skillGauge,
+    skillGaugeMax: SKILL.gaugeMax,
+    isSkillReady: skillGauge >= SKILL.gaugeMax,
+    isSkillMenuOpen,
+    openSkillMenu,
+    closeSkillMenu,
+    selectSkill,
+    isMagnetSelecting,
+    cancelMagnetSelecting,
+    selectMagnetTarget,
+    isGravityFlipped,
+    gameOverCountdown,
   };
 };

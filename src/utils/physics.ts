@@ -1,6 +1,6 @@
 import Matter from 'matter-js';
 
-import { PHYSICS } from '@/constants/physics';
+import { COLLISION_CATEGORY, ITEM_COLLISION_MASK, PHYSICS } from '@/constants/physics';
 import type { ItemDefinition } from '@/types/item';
 
 // Matter.js の Body に紐付けるカスタムデータ
@@ -29,6 +29,10 @@ export const createItemBody = (
     friction: item.friction,
     density: item.density,
     label: `item-${item.level}`,
+    collisionFilter: {
+      category: COLLISION_CATEGORY.item,
+      mask: ITEM_COLLISION_MASK,
+    },
   });
   (body as BodyWithItemPlugin).plugin.itemData = {
     level: item.level,
@@ -52,6 +56,11 @@ export const createWalls = (
     restitution: 0.2,
     friction: 0.5,
     label: 'wall',
+    collisionFilter: {
+      // 壁は全カテゴリのアイテムと衝突する。マスクは default の 0xFFFFFFFF で OK だが
+      // 明示的にカテゴリだけ wall にしておくと、対象アイテム側のマスクで壁を取り出せる。
+      category: COLLISION_CATEGORY.wall,
+    },
   };
 
   const ground = Matter.Bodies.rectangle(width / 2, height + t / 2, width + t * 2, t, wallOptions);

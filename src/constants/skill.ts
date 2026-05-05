@@ -23,10 +23,11 @@ export const SKILL = {
     multiplier: -0.8,
   },
   magnet: {
-    // 同レベルアイテムを引き寄せ続ける時間
-    durationMs: 1500,
-    // 引力強度（Body.applyForce に渡す係数。質量が大きい body も動かせるよう mass を掛けて使う）
-    forceMagnitude: 0.0012,
+    // 同レベルアイテムを引き寄せ続ける時間。離れた相手にも届くよう少し長め。
+    durationMs: 2500,
+    // 引力強度（Body.applyForce に渡す係数。質量が大きい body も動かせるよう mass を掛けて使う）。
+    // 衝突カテゴリで非対象アイテムをすり抜けるので、力は「壁にぶつかっても破綻しない範囲で速やかに集合する」値。
+    forceMagnitude: 0.005,
   },
 } as const;
 

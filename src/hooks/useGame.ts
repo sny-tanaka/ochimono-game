@@ -9,7 +9,12 @@ import {
   MAX_DROPPABLE_LEVEL,
   MAX_ITEM_LEVEL,
 } from '@/constants/items';
-import { PHYSICS } from '@/constants/physics';
+import {
+  COLLISION_CATEGORY,
+  ITEM_COLLISION_MASK,
+  MAGNET_TARGET_COLLISION_MASK,
+  PHYSICS,
+} from '@/constants/physics';
 import { gaugeGainForMerge, SKILL, type SkillKind } from '@/constants/skill';
 import { THEMES, type ThemeId } from '@/constants/themes';
 import { useScore } from '@/hooks/useScore';
@@ -192,6 +197,38 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const gravityFlipTimerRef = useRef<number | null>(null);
   const magnetEndAtRef = useRef<number | null>(null);
   const magnetLevelRef = useRef<number | null>(null);
+  // マグネット中に collisionFilter を書き換えた body 一覧。
+  // 発動終了 / 中断 / restart で確実に通常カテゴリに戻すために保持する。
+  const magnetTaggedBodiesRef = useRef<Set<Matter.Body>>(new Set());
+
+  // マグネットで対象に指定した body を MAGNET_TARGET カテゴリに切り替える。
+  // 結果: 壁と他の対象には衝突するが、非対象 item とは衝突せず擦り抜ける。
+  const tagAsMagnetTarget = useCallback((body: Matter.Body) => {
+    body.collisionFilter.category = COLLISION_CATEGORY.magnetTarget;
+    body.collisionFilter.mask = MAGNET_TARGET_COLLISION_MASK;
+    magnetTaggedBodiesRef.current.add(body);
+  }, []);
+
+  // 対象タグを通常 item に戻す。発動終了 / 中断 / restart で必ず呼ぶ。
+  const untagAllMagnetTargets = useCallback(() => {
+    for (const body of magnetTaggedBodiesRef.current) {
+      body.collisionFilter.category = COLLISION_CATEGORY.item;
+      body.collisionFilter.mask = ITEM_COLLISION_MASK;
+    }
+    magnetTaggedBodiesRef.current.clear();
+  }, []);
+
+  // マグネット必殺技の終了処理（時間切れ / 対象消滅 / 中断）。
+  const endMagnet = useCallback(() => {
+    untagAllMagnetTargets();
+    magnetEndAtRef.current = null;
+    magnetLevelRef.current = null;
+    if (activeSkillRef.current === 'magnet') activeSkillRef.current = null;
+  }, [untagAllMagnetTargets]);
+
+  // afterUpdate 内（deps を [] に固定したいので ref で参照）
+  const endMagnetRef = useRef(endMagnet);
+  endMagnetRef.current = endMagnet;
 
   // ─── ゲームオーバー判定（5秒猶予 + カウントダウン） ─────────────────
   // ライン超過を最初に検出した時刻。null は危機状態でない。
@@ -380,43 +417,38 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       if (magnetEndAtRef.current !== null) {
         const now = performance.now();
         if (now >= magnetEndAtRef.current) {
-          magnetEndAtRef.current = null;
-          magnetLevelRef.current = null;
-          activeSkillRef.current = null;
+          endMagnetRef.current();
         } else {
-          const targetLevel = magnetLevelRef.current;
-          if (targetLevel !== null) {
-            const targets: Matter.Body[] = [];
-            for (const b of itemBodiesRef.current) {
-              const data = getItemDataFromBody(b);
-              if (data && !data.consumed && data.level === targetLevel) targets.push(b);
+          // 対象 body は magnetTaggedBodiesRef で管理している（発動時にタグ付け済み）。
+          // 合体で消費された body は consumed フラグがつくので毎フレーム除外する。
+          const targets: Matter.Body[] = [];
+          for (const b of magnetTaggedBodiesRef.current) {
+            const data = getItemDataFromBody(b);
+            if (data && !data.consumed) targets.push(b);
+          }
+          if (targets.length >= 2) {
+            let cx = 0;
+            let cy = 0;
+            for (const b of targets) {
+              cx += b.position.x;
+              cy += b.position.y;
             }
-            if (targets.length >= 2) {
-              let cx = 0;
-              let cy = 0;
-              for (const b of targets) {
-                cx += b.position.x;
-                cy += b.position.y;
-              }
-              cx /= targets.length;
-              cy /= targets.length;
-              for (const b of targets) {
-                const dx = cx - b.position.x;
-                const dy = cy - b.position.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist < 1) continue;
-                const f = SKILL.magnet.forceMagnitude * b.mass;
-                Matter.Body.applyForce(b, b.position, {
-                  x: (dx / dist) * f,
-                  y: (dy / dist) * f,
-                });
-              }
-            } else {
-              // 1 個以下なら引き寄せ意味なし、即終了
-              magnetEndAtRef.current = null;
-              magnetLevelRef.current = null;
-              activeSkillRef.current = null;
+            cx /= targets.length;
+            cy /= targets.length;
+            for (const b of targets) {
+              const dx = cx - b.position.x;
+              const dy = cy - b.position.y;
+              const dist = Math.hypot(dx, dy);
+              if (dist < 1) continue;
+              const f = SKILL.magnet.forceMagnitude * b.mass;
+              Matter.Body.applyForce(b, b.position, {
+                x: (dx / dist) * f,
+                y: (dy / dist) * f,
+              });
             }
+          } else {
+            // 1 個以下なら引き寄せ意味なし、即終了
+            endMagnetRef.current();
           }
         }
       }
@@ -577,20 +609,21 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       }
       const data = getItemDataFromBody(hits[0]);
       if (!data) return;
-      const sameLevelCount = bodies.filter(
-        (b) => getItemDataFromBody(b)?.level === data.level
-      ).length;
-      if (sameLevelCount < 2) {
+      const sameLevelTargets = bodies.filter((b) => getItemDataFromBody(b)?.level === data.level);
+      if (sameLevelTargets.length < 2) {
         // 同レベルが 1 個しか無い → 引き寄せ意味なし。選択モード継続。
         return;
       }
+      // 対象 body を MAGNET_TARGET カテゴリに切り替える（非対象アイテムを擦り抜けて飛んでいけるように）。
+      // 発動終了時に必ず元のカテゴリに戻すので、必ず endMagnet 経路を通すこと。
+      for (const b of sameLevelTargets) tagAsMagnetTarget(b);
       magnetLevelRef.current = data.level;
       magnetEndAtRef.current = performance.now() + SKILL.magnet.durationMs;
       setIsMagnetSelectingBoth(false);
       playSoundRef.current('special');
       consumeGauge();
     },
-    [consumeGauge, setIsMagnetSelectingBoth]
+    [consumeGauge, setIsMagnetSelectingBoth, tagAsMagnetTarget]
   );
 
   const openSkillMenu = useCallback(() => {
@@ -630,13 +663,15 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     const engine = engineRef.current;
     if (engine) engine.gravity.y = PHYSICS.gravityY;
     setIsGravityFlipped(false);
+    // マグネット中だった body のカテゴリを通常に戻す
+    untagAllMagnetTargets();
     magnetEndAtRef.current = null;
     magnetLevelRef.current = null;
     activeSkillRef.current = null;
     setIsSkillMenuOpen(false);
     setIsMagnetSelectingBoth(false);
     setSkillGaugeBoth(0);
-  }, [setIsMagnetSelectingBoth, setSkillGaugeBoth]);
+  }, [setIsMagnetSelectingBoth, setSkillGaugeBoth, untagAllMagnetTargets]);
 
   // drop / start / restart はいずれも ref を介して最新の current/next を読むので
   // useCallback の deps を空にできる（参照が安定 → GameField の handler も安定）。

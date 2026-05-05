@@ -72,8 +72,12 @@ export const createWalls = (
   const leftWall = Matter.Bodies.rectangle(-t / 2, height / 2, t, height * 2, wallOptions);
   const rightWall = Matter.Bodies.rectangle(width + t / 2, height / 2, t, height * 2, wallOptions);
   // 天井壁。重力反転中にアイテムが画面外へ吹き飛んでロストするのを防ぐ。
-  // ground と同様に視認できない位置に置く。
-  const ceiling = Matter.Bodies.rectangle(width / 2, -t / 2, width + t * 2, t, wallOptions);
+  // 反発係数 0 にして、ぶつかっても弾まずに滑らかに沿うようにする
+  // （弾むとアイテムが上半分から下に押し戻されてしまう）。
+  const ceiling = Matter.Bodies.rectangle(width / 2, -t / 2, width + t * 2, t, {
+    ...wallOptions,
+    restitution: 0,
+  });
 
   return { ground, leftWall, rightWall, ceiling };
 };

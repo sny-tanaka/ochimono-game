@@ -14023,7 +14023,7 @@ const Kh = N.memo(
               }),
               $.jsx('footer', {
                 className: rn.footer,
-                children: $.jsxs('span', { className: rn.version, children: ['v', '1.0.18'] }),
+                children: $.jsxs('span', { className: rn.version, children: ['v', '1.0.19'] }),
               }),
             ],
           }),
@@ -19302,7 +19302,7 @@ const oS = 3,
       h = we.Bodies.rectangle(s / 2, b + T / 2, s + T * 2, T, x),
       i = we.Bodies.rectangle(-T / 2, b / 2, T, b * 2, x),
       d = we.Bodies.rectangle(s + T / 2, b / 2, T, b * 2, x),
-      f = we.Bodies.rectangle(s / 2, -T / 2, s + T * 2, T, x);
+      f = we.Bodies.rectangle(s / 2, -T / 2, s + T * 2, T, { ...x, restitution: 0 });
     return { ground: h, leftWall: i, rightWall: d, ceiling: f };
   },
   OS = (s, b) => ({ x: (s.position.x + b.position.x) / 2, y: (s.position.y + b.position.y) / 2 }),

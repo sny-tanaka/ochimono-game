@@ -13915,10 +13915,7 @@ const Hp = '_toggle_1ap46_1',
 Sh.displayName = 'SoundToggle';
 const jp = '_toggle_15urq_1',
   Yp = { toggle: jp },
-  Ro = [
-    { id: 'gumi', label: 'グミ' },
-    { id: 'other', label: 'その他' },
-  ],
+  Ro = [{ id: 'gumi', label: 'グミ' }],
   Co = 'gumi',
   xh = (c) => typeof c == 'string' && Ro.some((R) => R.id === c),
   Eh = Y.memo(({ value: c, onChange: R }) => {
@@ -13957,7 +13954,7 @@ const Gp = ({
           ie.jsxs('span', {
             className: oo.version,
             'aria-label': 'ビルドバージョン',
-            children: ['v', '1.0.5'],
+            children: ['v', '1.0.7'],
           }),
         ],
       }),

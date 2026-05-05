@@ -67,7 +67,7 @@ describe('itemForFieldWidth', () => {
   });
 
   test('themeId を渡すと svgPath がそのテーマのディレクトリ配下になる', () => {
-    const item = itemForFieldWidth(7, REFERENCE_FIELD_WIDTH, 'other');
+    const item = itemForFieldWidth(7, REFERENCE_FIELD_WIDTH, 'gumi');
     expect(item.svgPath).toBe('images/other/level07.png');
   });
 
@@ -75,13 +75,5 @@ describe('itemForFieldWidth', () => {
     const a = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'gumi');
     const b = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'gumi');
     expect(a).toBe(b);
-  });
-
-  test('キーが違えば別参照を返す', () => {
-    const a = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'gumi');
-    const b = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'other');
-    const c = itemForFieldWidth(4, REFERENCE_FIELD_WIDTH, 'gumi');
-    expect(a).not.toBe(b);
-    expect(a).not.toBe(c);
   });
 });

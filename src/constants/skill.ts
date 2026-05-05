@@ -24,12 +24,28 @@ export const SKILL = {
   gravityFlip: {
     durationMs: 3000,
     // 反転中の重力倍率。負値で上向き。
-    // -0.8 だとアイテムが急上昇して画面外に飛ぶ、-0.12 だと弱すぎて動かない。
-    // -0.35 で「ゆっくり浮き上がって上半分に滞留」する加減。
-    multiplier: -0.35,
-    // 反転中だけ全 body に適用する空気抵抗（frictionAir）。
-    // 通常 0.01。少し強めて加速を抑え「無重力的にふわふわ漂う」挙動にする。
-    frictionAir: 0.04,
+    // 強めの初速（liftKickVelocity）で勢いよく持ち上げ、終端速度を抑える frictionAir で
+    // 上半分にゆっくり留まらせる組み合わせ。
+    multiplier: -1.5,
+    frictionAir: 0.05,
+    // 反転発動時に全 body に与える「上方向の初速」。
+    // 床や壁との静止摩擦で地面に張り付いている body を確実に剥がし、
+    // 重い高レベル body も含めて全部いっせいに浮き上がらせる。
+    liftKickVelocity: -8,
+    // 反転終了直後の「叩きつけ」フェーズの設定。
+    // 通常重力の slamGravityMultiplier 倍を slamDurationMs だけ適用する。
+    // この間 frictionAir はほぼゼロにして空気抵抗を切るので、アイテムが
+    // 急激に床に落下して大きくバウンドする。
+    slamGravityMultiplier: 3.5,
+    slamFrictionAir: 0,
+    slamDurationMs: 800,
+    // 叩きつけ中だけアイテムの反発係数を上書きしてバウンドを誇張する。
+    // 通常 0.25〜0.5 だと thud で終わるが 0.85 にするとしっかり跳ね返る。
+    slamRestitution: 0.85,
+    // 叩きつけ開始時に全 body へ「下方向の初速」を強制注入する。
+    // 天井 / 壁との摩擦で張り付いていた body も確実に剥がして加速させる。
+    // Matter の y 軸は下向きが正。body 質量に関係なく一律の速度を入れる。
+    slamKickVelocity: 16,
   },
   magnet: {
     durationMs: 2500,

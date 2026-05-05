@@ -194,6 +194,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const [isMagnetSelecting, setIsMagnetSelecting] = useState(false);
   const isMagnetSelectingRef = useRef(false);
   const [isGravityFlipped, setIsGravityFlipped] = useState(false);
+  // 反転中 + 叩きつけ中は天井に張り付いたアイテムでゲームオーバーラインが発火しないよう、
+  // afterUpdate からも参照できる ref を別管理する。発動中は isDanger 判定を skip する。
+  const gravitySkillActiveRef = useRef(false);
 
   // 発動中の必殺技を一意に識別する（多重発動防止）
   const activeSkillRef = useRef<SkillKind | null>(null);
@@ -278,11 +281,11 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       },
     });
 
-    const { ground, leftWall, rightWall } = createWalls(fw, fh);
-    [ground, leftWall, rightWall].forEach((w) => {
+    const { ground, leftWall, rightWall, ceiling } = createWalls(fw, fh);
+    [ground, leftWall, rightWall, ceiling].forEach((w) => {
       w.render.visible = false;
     });
-    Matter.World.add(engine.world, [ground, leftWall, rightWall]);
+    Matter.World.add(engine.world, [ground, leftWall, rightWall, ceiling]);
 
     Matter.Render.run(render);
     const runner = Matter.Runner.create();
@@ -458,6 +461,18 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       }
 
       if (statusRef.current !== 'playing') return;
+      // 重力反転 / 叩きつけ中は天井張り付き等で誤判定が出るのでゲームオーバー検査を skip。
+      if (gravitySkillActiveRef.current) {
+        // 発動前から進んでいた危機状態カウントダウンも一旦解除する
+        if (gameOverDangerSinceRef.current !== null) {
+          gameOverDangerSinceRef.current = null;
+          if (lastCountdownRef.current !== null) {
+            lastCountdownRef.current = null;
+            setGameOverCountdown(null);
+          }
+        }
+        return;
+      }
       // afterUpdate は ~60Hz で呼ばれる。ゲームオーバー判定は 6 ティックに 1 度（≒ 10Hz）。
       tick = (tick + 1) % 6;
       if (tick !== 0) return;
@@ -573,31 +588,65 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
 
   // 重力反転：3 秒だけ engine.gravity.y を反転、タイマーで戻す。
   // 反転中は body の frictionAir を一時的に上げて「ふわふわ漂う」感じにする。
+  // 反転終了直後は slamDurationMs の間、重力を増幅 + 空気抵抗ゼロにして
+  // アイテムを床に叩きつけて大きくバウンドさせる。
   const activateGravityFlip = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
     if (gravityFlipTimerRef.current !== null) return; // 多重発動禁止
     activeSkillRef.current = 'gravityFlip';
-    const originalGravity = engine.gravity.y;
+    gravitySkillActiveRef.current = true;
+    const originalGravity = PHYSICS.gravityY;
     engine.gravity.y = originalGravity * SKILL.gravityFlip.multiplier;
-    // 各 body の元 frictionAir を覚えておいて発動終了時に戻す
+    // 各 body の元 frictionAir / restitution を覚えておいて、発動終了時に戻す。
     const originalAir = new Map<Matter.Body, number>();
+    const originalRestitution = new Map<Matter.Body, number>();
     for (const body of itemBodiesRef.current) {
       originalAir.set(body, body.frictionAir);
+      originalRestitution.set(body, body.restitution);
       body.frictionAir = SKILL.gravityFlip.frictionAir;
+      // 床 / 壁の静止摩擦で動かない body を剥がすため、上向きの初速を一律で注入。
+      Matter.Body.setVelocity(body, {
+        x: body.velocity.x,
+        y: SKILL.gravityFlip.liftKickVelocity,
+      });
     }
     setIsGravityFlipped(true);
     playSoundRef.current('special');
     gravityFlipTimerRef.current = window.setTimeout(() => {
+      // ─── 叩きつけフェーズ：重力を強めて空気抵抗を切る + 反発係数を上書き ───
       const e = engineRef.current;
-      if (e) e.gravity.y = originalGravity;
-      // 発動中に追加で生まれた body もあり得るので、覚えていないものは Matter デフォルトに戻す。
+      if (e) e.gravity.y = originalGravity * SKILL.gravityFlip.slamGravityMultiplier;
       for (const body of itemBodiesRef.current) {
-        body.frictionAir = originalAir.get(body) ?? 0.01;
+        body.frictionAir = SKILL.gravityFlip.slamFrictionAir;
+        // restitution は body 生成時に Map に入れた個別値を覚えてあるので、
+        // 発動中に追加された body も含めて改めて記録 → 上書き
+        if (!originalRestitution.has(body)) {
+          originalRestitution.set(body, body.restitution);
+        }
+        body.restitution = SKILL.gravityFlip.slamRestitution;
+        // 天井 / 壁の摩擦で張り付いた body も剥がして落ちるよう、下方向の初速を注入。
+        Matter.Body.setVelocity(body, {
+          x: body.velocity.x,
+          y: SKILL.gravityFlip.slamKickVelocity,
+        });
       }
-      setIsGravityFlipped(false);
-      gravityFlipTimerRef.current = null;
-      if (activeSkillRef.current === 'gravityFlip') activeSkillRef.current = null;
+      setIsGravityFlipped(false); // オーバーレイ演出は終了
+      playSoundRef.current('special');
+
+      gravityFlipTimerRef.current = window.setTimeout(() => {
+        // ─── 通常重力に復元 ───
+        const e2 = engineRef.current;
+        if (e2) e2.gravity.y = originalGravity;
+        for (const body of itemBodiesRef.current) {
+          // 発動中に追加で生まれた body は Map に無いので Matter デフォルトにフォールバック
+          body.frictionAir = originalAir.get(body) ?? 0.01;
+          body.restitution = originalRestitution.get(body) ?? 0.4;
+        }
+        gravityFlipTimerRef.current = null;
+        gravitySkillActiveRef.current = false;
+        if (activeSkillRef.current === 'gravityFlip') activeSkillRef.current = null;
+      }, SKILL.gravityFlip.slamDurationMs);
     }, SKILL.gravityFlip.durationMs);
   }, []);
 
@@ -684,6 +733,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     const engine = engineRef.current;
     if (engine) engine.gravity.y = PHYSICS.gravityY;
     setIsGravityFlipped(false);
+    gravitySkillActiveRef.current = false;
     // マグネット中だった body のカテゴリを通常に戻す
     untagAllMagnetTargets();
     magnetEndAtRef.current = null;

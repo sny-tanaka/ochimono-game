@@ -15,13 +15,13 @@ if (!self.define) {
         return e;
       })
   );
-  self.define = (s, a) => {
-    const r = e || ('document' in self ? document.currentScript.src : '') || location.href;
-    if (i[r]) return;
+  self.define = (s, r) => {
+    const a = e || ('document' in self ? document.currentScript.src : '') || location.href;
+    if (i[a]) return;
     let l = {};
-    const d = (e) => n(e, r),
-      f = { module: { uri: r }, exports: l, require: d };
-    i[r] = Promise.all(s.map((e) => f[e] || d(e))).then((e) => (a(...e), l));
+    const d = (e) => n(e, a),
+      f = { module: { uri: a }, exports: l, require: d };
+    i[a] = Promise.all(s.map((e) => f[e] || d(e))).then((e) => (r(...e), l));
   };
 }
 define(['./workbox-1ef09536'], function (e) {
@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '3ec63aa3fd1548010f7c92d86a76b144' },
+        { url: 'index.html', revision: '75b39581c315dcef63b43a0a82675292' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'sounds/punyu.mp3', revision: 'a36dc54f82e9199637f75dad46b2d7c9' },
@@ -46,7 +46,7 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'images/gumi/level02.png', revision: '27de8023b13180567a123b5f3278d6ae' },
         { url: 'images/gumi/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
         { url: 'assets/workbox-window.prod.es5-BIl4cyR9.js', revision: null },
-        { url: 'assets/index-Dn1ddSTZ.js', revision: null },
+        { url: 'assets/index-Dk5emrc6.js', revision: null },
         { url: 'assets/index-BqRHCp6p.css', revision: null },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },

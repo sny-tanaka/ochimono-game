@@ -56,8 +56,10 @@ const GameContent = ({ size }: { size: Size }) => {
           {game.status === 'playing' ? (
             <div className={styles.skill_button_wrapper}>
               <SkillButton
-                ratio={game.skillGauge / game.skillGaugeMax}
-                isReady={game.isSkillReady}
+                gauge={game.skillGauge}
+                segmentMax={game.skillSegmentMax}
+                segmentCount={game.skillSegmentCount}
+                canOpen={game.canOpenSkillMenu}
                 onClick={game.openSkillMenu}
               />
             </div>
@@ -77,6 +79,7 @@ const GameContent = ({ size }: { size: Size }) => {
         open={game.isSkillMenuOpen}
         onSelect={game.selectSkill}
         onClose={game.closeSkillMenu}
+        canUse={game.canUseSkill}
       />
       <SettingsDrawer
         open={isSettingsOpen}

@@ -31,9 +31,10 @@
 }
 
 .gauge_track {
-  fill: rgba(255, 255, 255, 0.85);
+  fill: none;
   stroke: rgba(107, 79, 160, 0.25);
   stroke-width: 6;
+  stroke-linecap: round;
 }
 
 .gauge_fill {
@@ -41,8 +42,14 @@
   stroke: #b48dff;
   stroke-width: 6;
   stroke-linecap: round;
-  // strokeDashoffset を変える時に滑らかに見せる
-  transition: stroke-dashoffset 0.25s ease-out;
+  // strokeDasharray の更新を滑らかに見せる
+  transition: stroke-dasharray 0.25s ease-out;
+}
+
+// セグメント満タンの個別表示（金色 + 影）
+.gauge_fill_full {
+  stroke: #ffd740;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 64, 0.7));
 }
 
 .icon {
@@ -55,25 +62,11 @@
   z-index: 1;
 }
 
+// 1 セグメント以上溜まっていれば（= canOpen=true）アイコンが反応する。
 .ready {
-  .gauge_fill {
-    stroke: #ffd740;
-    filter: drop-shadow(0 0 6px rgba(255, 215, 64, 0.7));
-    animation: ready_pulse 1.4s ease-in-out infinite;
-  }
   .icon {
     filter: none;
     animation: icon_bounce 1.4s ease-in-out infinite;
-  }
-}
-
-@keyframes ready_pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 6px rgba(255, 215, 64, 0.7));
-  }
-  50% {
-    filter: drop-shadow(0 0 14px rgba(255, 215, 64, 1));
   }
 }
 

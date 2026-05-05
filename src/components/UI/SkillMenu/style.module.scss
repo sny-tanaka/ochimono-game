@@ -40,11 +40,11 @@
   background: #fff;
   padding: 12px 14px;
   display: grid;
-  grid-template-columns: 44px 1fr;
+  grid-template-columns: 44px 1fr auto;
   grid-template-rows: auto auto;
   grid-template-areas:
-    'icon label'
-    'icon desc';
+    'icon label cost'
+    'icon desc cost';
   align-items: center;
   gap: 2px 12px;
   text-align: left;
@@ -54,13 +54,18 @@
     border-color 0.12s,
     background 0.12s;
 
-  &:active {
+  &:not(:disabled):active {
     transform: scale(0.97);
   }
-  &:hover {
+  &:not(:disabled):hover {
     border-color: #b48dff;
     background: #fdfbff;
   }
+}
+
+.choice_disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .choice_icon {
@@ -81,6 +86,23 @@
   grid-area: desc;
   font-size: 12px;
   color: rgba(74, 51, 130, 0.8);
+}
+
+.choice_cost {
+  grid-area: cost;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+// 1 ゲージ分を表す小さなピル。コスト 1=1個 / 3=3個並ぶ。
+.cost_pip {
+  width: 6px;
+  height: 12px;
+  border-radius: 3px;
+  background: #ffd740;
+  box-shadow: 0 0 4px rgba(255, 215, 64, 0.5);
 }
 
 .cancel {

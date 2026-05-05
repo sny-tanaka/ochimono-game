@@ -1,32 +1,38 @@
 // 必殺技関連の定数
 
+// 1 ゲージ（セグメント）あたりの満タン値
+export const SKILL_SEGMENT_MAX = 100;
+// セグメント数（リング上の分割数）
+export const SKILL_SEGMENT_COUNT = 3;
+
 export const SKILL = {
-  // ゲージ満タン値。 合体時にレベルに応じて加算される（後述 gaugeGainForMerge）。
-  // 体感: 中盤に 1 回、終盤に追加 1〜2 回ほど発動できる量を目安にチューニング。
-  gaugeMax: 100,
+  // 全セグメント満タン値。 segmentMax × segmentCount。
+  gaugeMax: SKILL_SEGMENT_MAX * SKILL_SEGMENT_COUNT,
+  // 1 セグメント分（強い必殺技は複数セグメントを消費する）。
+  segmentMax: SKILL_SEGMENT_MAX,
+  segmentCount: SKILL_SEGMENT_COUNT,
   // レベル10生成時のボーナス（通常合体に加えて）
   bonusOnLevel10Created: 8,
   // レベル10同士の特殊消滅時のボーナス
   bonusOnSpecialElimination: 25,
 
   shake: {
-    // 各 body に加える瞬間衝撃の上限・下限。Matter.Body.applyForce の単位そのまま。
     impulseMin: 0.04,
     impulseMax: 0.12,
-    // 上方向に少し強く力を加えてフィールド全体を持ち上げる。
     upwardBias: 0.05,
   },
   gravityFlip: {
-    // 反転持続時間
     durationMs: 3000,
-    // 反転中の重力（通常 PHYSICS.gravityY の符号反転 × 倍率）
-    multiplier: -0.8,
+    // 反転中の重力倍率。負値で上向き。
+    // -0.8 だとアイテムが急上昇して画面外に飛ぶ、-0.12 だと弱すぎて動かない。
+    // -0.35 で「ゆっくり浮き上がって上半分に滞留」する加減。
+    multiplier: -0.35,
+    // 反転中だけ全 body に適用する空気抵抗（frictionAir）。
+    // 通常 0.01。少し強めて加速を抑え「無重力的にふわふわ漂う」挙動にする。
+    frictionAir: 0.04,
   },
   magnet: {
-    // 同レベルアイテムを引き寄せ続ける時間。離れた相手にも届くよう少し長め。
     durationMs: 2500,
-    // 引力強度（Body.applyForce に渡す係数。質量が大きい body も動かせるよう mass を掛けて使う）。
-    // 衝突カテゴリで非対象アイテムをすり抜けるので、力は「壁にぶつかっても破綻しない範囲で速やかに集合する」値。
     forceMagnitude: 0.005,
   },
 } as const;
@@ -35,3 +41,15 @@ export const SKILL = {
 export const gaugeGainForMerge = (mergedLevel: number): number => mergedLevel;
 
 export type SkillKind = 'shake' | 'gravityFlip' | 'magnet';
+
+// 各必殺技の発動コスト（セグメント単位）。
+// マグネットは 3 セグメント全てが必要（強力なので頻度を絞る）。
+export const SKILL_COST_SEGMENTS: Record<SkillKind, number> = {
+  shake: 1,
+  gravityFlip: 1,
+  magnet: SKILL_SEGMENT_COUNT,
+};
+
+// 各必殺技の発動コスト（ポイント単位）
+export const skillCostPoints = (kind: SkillKind): number =>
+  SKILL_COST_SEGMENTS[kind] * SKILL_SEGMENT_MAX;

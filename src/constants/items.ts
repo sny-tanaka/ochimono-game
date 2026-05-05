@@ -1,3 +1,4 @@
+import { DEFAULT_THEME_ID, type ThemeId } from '@/constants/themes';
 import type { ItemDefinition, ItemTheme } from '@/types/item';
 
 // アイテム定義の単一ソース
@@ -57,19 +58,16 @@ const ITEM_THEMES: Record<number, ItemTheme> = {
   10: 'special',
 };
 
-// アイテムの SVG パス（public 配下基準）
-const ITEM_SVG_PATHS: Record<number, string> = {
-  1: 'images/gumi/item_01_heart_s.svg',
-  2: 'images/gumi/item_02_strawberry_s.svg',
-  3: 'images/gumi/item_03_cat_s.svg',
-  4: 'images/gumi/item_04_heart_m.svg',
-  5: 'images/gumi/item_05_strawberry_m.svg',
-  6: 'images/gumi/item_06_cat_m.svg',
-  7: 'images/gumi/item_07_heart_l.svg',
-  8: 'images/gumi/item_08_strawberry_l.svg',
-  9: 'images/gumi/item_09_cat_l.svg',
-  10: 'images/gumi/item_10_special.svg',
+// アイテム画像のパス（public 配下基準）。各画像は 256×256 透過 PNG。
+// ファイル名は level{NN}.png に固定し、テーマ差し替えはディレクトリ単位で行う。
+export const imagePathForTheme = (themeId: ThemeId, level: number): string => {
+  const padded = String(level).padStart(2, '0');
+  return `images/${themeId}/level${padded}.png`;
 };
+
+// アイテム画像のナチュラルサイズ（PNG の縦横ピクセル数）。
+// applySprite のスケール計算で divisor として使う。
+export const ITEM_SPRITE_NATURAL_SIZE = 256;
 
 const ITEM_COLORS: Record<number, { color: string; glow: string }> = {
   1: { color: '#FF8FAB', glow: '#FFD6E0' },
@@ -97,7 +95,7 @@ const buildItem = (level: number): ItemDefinition => ({
   friction: 0.3,
   density: 0.001,
   score: triangularScore(level),
-  svgPath: ITEM_SVG_PATHS[level],
+  svgPath: imagePathForTheme(DEFAULT_THEME_ID, level),
   color: ITEM_COLORS[level].color,
   glowColor: ITEM_COLORS[level].glow,
 });
@@ -125,8 +123,17 @@ export const REFERENCE_FIELD_WIDTH = 360;
 export const computeRadiusScale = (fieldWidth: number): number =>
   Math.min(1, fieldWidth / REFERENCE_FIELD_WIDTH);
 
-// レベルと実フィールド幅から ItemDefinition を生成する。radius 以外は ITEMS と同じ。
-export const itemForFieldWidth = (level: number, fieldWidth: number): ItemDefinition => {
+// レベル / 実フィールド幅 / テーマから ItemDefinition を生成する。
+// radius は基準フィールド幅に応じて縮小、svgPath はテーマに応じて差し替え。
+export const itemForFieldWidth = (
+  level: number,
+  fieldWidth: number,
+  themeId: ThemeId = DEFAULT_THEME_ID
+): ItemDefinition => {
   const base = ITEMS[level];
-  return { ...base, radius: base.radius * computeRadiusScale(fieldWidth) };
+  return {
+    ...base,
+    radius: base.radius * computeRadiusScale(fieldWidth),
+    svgPath: imagePathForTheme(themeId, level),
+  };
 };

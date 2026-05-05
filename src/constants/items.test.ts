@@ -65,4 +65,9 @@ describe('itemForFieldWidth', () => {
     const item = itemForFieldWidth(level, REFERENCE_FIELD_WIDTH / 2);
     expect(item.radius).toBeCloseTo(ITEMS[level].radius / 2);
   });
+
+  test('themeId を渡すと svgPath がそのテーマのディレクトリ配下になる', () => {
+    const item = itemForFieldWidth(7, REFERENCE_FIELD_WIDTH, 'other');
+    expect(item.svgPath).toBe('images/other/level07.png');
+  });
 });

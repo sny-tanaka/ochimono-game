@@ -1,147 +1,216 @@
-# pwa-template
+# ochimono-game
 
-GitHub Pages で公開する SPA / PWA のテンプレートです。
+ハート・イチゴ・ネコをくっつけて遊ぶ落ちものパズルゲーム（スイカゲーム風）。
+GitHub Pages で公開する SPA / PWA。
 
-- **Vite 6** + **React 19** + **TypeScript 5**
-- **React Router 7**（サブパス公開対応）
-- **vite-plugin-pwa** でマニフェスト + Service Worker（Workbox）を自動生成
-- ビルド成果物を `docs/` に出力 → GitHub Pages の `Deploy from a branch / docs` をそのまま使う前提
-- ESLint v9 (flat config) + Prettier + Husky v9 + lint-staged
-- **Vitest** + Testing Library
-- `plop` によるコード雛形ジェネレータ（component / page / logic / api / type）
+- 公開 URL: https://&lt;user&gt;.github.io/ochimono-game/
+- 物理エンジン: [Matter.js](https://brm.io/matter-js/)
+- フレームワーク: Vite 6 + React 19 + TypeScript 5
+- スタイル: Sass (SCSS module)
+- テスト: Vitest + Testing Library
 
-## 使い方
+## 特徴
 
-このリポジトリを **テンプレートとして clone** して、`__APP_NAME__` などのプレースホルダを書き換えてください。
+- 同じレベルのアイテム同士をぶつけて 1 段階上のアイテムに合体する、スイカゲーム形式の落ちものパズル
+- 10 レベル × 複数テーマのアセット（PNG 透過画像）
+- スコアは三角数方式（合体後レベル `n` → `n × (n+1) ÷ 2` 点）。最高スコア / 履歴は localStorage 保存
+- 画面右上のセレクトから **テーマ（アセット一式）を即時切り替え** 可能
+- フィールドサイズに合わせてアイテム半径が比例縮小（最大は端末によらず一定）
+- BGM 連続合体音（`punyu.mp3`）は単一インスタンスで巻き戻し再生
+- ビルドごとに `package.json` の patch バージョンが自動インクリメント、画面右上に `vX.Y.Z` 表示
+- PWA 対応（`vite-plugin-pwa` + Workbox）
+- ビルド出力は `docs/` に出るので、GitHub Pages の `Deploy from a branch / docs` でそのまま配信できる
 
-### 1. リポジトリを作る
+## セットアップ
 
-GitHub の `Use this template` で新規リポジトリを作るか、`git clone` 後に `git remote set-url origin` で差し替えてください。
-
-### 2. プレースホルダを置換する
-
-以下のプレースホルダがソース全体に埋め込んであります。**必ず全て置換してから push してください**。
-
-| プレースホルダ | 用途 | 例 |
-| --- | --- | --- |
-| `__APP_NAME__` | `package.json` の `name`、`<title>`、PWA の `name`、トップページの見出し | `My PWA App` |
-| `__APP_SHORT_NAME__` | PWA の `short_name`（ホーム画面のアイコン下に出る短い名前。12 文字以内推奨） | `MyPWA` |
-| `__APP_DESCRIPTION__` | `<meta description>` と PWA の `description` | `自分用のメモ PWA` |
-| `__REPO_NAME__` | GitHub のリポジトリ名。Vite の `base`、PWA の `start_url` / `scope`、`BrowserRouter` の `basename` に使用。**GitHub Pages のサブパス（`https://<user>.github.io/<repo>/`）と一致させること** | `my-pwa` |
-
-ワンライナーで置換する場合（macOS の `sed`）：
-
-```bash
-APP_NAME="My PWA App"
-APP_SHORT_NAME="MyPWA"
-APP_DESCRIPTION="自分用のメモ PWA"
-REPO_NAME="my-pwa"
-
-grep -rl '__APP_NAME__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__APP_NAME__|${APP_NAME}|g"
-grep -rl '__APP_SHORT_NAME__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__APP_SHORT_NAME__|${APP_SHORT_NAME}|g"
-grep -rl '__APP_DESCRIPTION__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__APP_DESCRIPTION__|${APP_DESCRIPTION}|g"
-grep -rl '__REPO_NAME__' . --exclude-dir=node_modules --exclude-dir=.git \
-  | xargs sed -i '' "s|__REPO_NAME__|${REPO_NAME}|g"
-```
-
-`package.json` の `name` には英小文字 + ハイフンしか使えないので、`__APP_NAME__` を表示用名称（日本語可）にしたい場合は手で個別に書き分けてください。
-
-### 3. アイコン画像を差し替える
-
-`public/` に以下のファイルを置く必要があります（テンプレートには含まれていません）：
-
-- `favicon.ico`（マルチサイズ: 16 / 24 / 32 / 64）
-- `icon-192.png`（192×192）
-- `icon-512.png`（512×512、PWA splash 用 / maskable 兼用）
-
-ファイル名やパスを変える場合は `vite.config.ts` の `manifest.icons` と `includeAssets` も合わせて変更してください。
-
-### 4. インストール
+Node 22 系（`.node-version` で固定）。Yarn 1（classic）。
 
 ```bash
 yarn install
 ```
 
-`preinstall` フックで `.node-version` (`22.11.0`) と一致するか確認します。一致しない場合は `nodenv` / `volta` などで合わせてください。
+`preinstall` で Node バージョンチェックが走ります。
 
-### 5. 開発
-
-```bash
-yarn dev
-```
-
-http://localhost:5173 で起動します。
-
-> Service Worker は **本番ビルドのみ有効**です（`vite.config.ts` の `devOptions.enabled: false`）。dev で SW をテストしたい場合は `true` に変更し、確認後は必ず元に戻すこと。古いキャッシュが返って "変更が反映されない" 事故になります。
-
-### 6. テスト・Lint
+## 開発
 
 ```bash
-yarn test           # Vitest（一回実行）
-yarn test:watch     # Vitest watch モード
-yarn lint           # ESLint チェック
-yarn fix            # ESLint 自動修正
-yarn format         # Prettier 適用
-yarn format:check   # Prettier チェックのみ
+yarn dev          # http://localhost:5173/ochimono-game/ で起動
+yarn test         # Vitest（一回実行）
+yarn test:watch   # Vitest watch モード
+yarn lint         # ESLint
+yarn fix          # ESLint 自動修正
+yarn format       # Prettier 適用
+yarn format:check # Prettier チェックのみ
 ```
+
+> Service Worker は **本番ビルドのみ有効**です（`vite.config.ts` の `devOptions.enabled: false`）。古い SW がキャッシュを返して "変更が反映されない" 事故を避けるため。
 
 `pre-commit` フックで `yarn fix` と `yarn lint-staged` が走ります（Husky v9）。
 
-### 7. ビルド & GitHub Pages デプロイ
+## ビルド & GitHub Pages デプロイ
 
 ```bash
 yarn build
 ```
 
-`docs/` にビルド成果物 + Service Worker (`sw.js`) + `manifest.webmanifest` が出力されます。`docs/` も含めてコミットして push すれば、GitHub の Settings → Pages で `Deploy from a branch` / `main` / `/docs` を選んでおくだけで公開されます。
+実行内容:
 
-> **Tip**: `vite.config.ts` の `BASE` と `src/main.tsx` の `basename` がリポジトリ名（サブパス）と一致しないと、JS / CSS / 画像 / SW スコープが全て壊れます。先に GitHub にリポジトリを作って名前を確定させてから `__REPO_NAME__` を置換するのが安全です。
+1. `scripts/bump-patch-version.mjs` で `package.json` の patch を 1 つ上げる（git tag/コミットはしない）
+2. `tsc -b` で型チェック
+3. `vite build` で `docs/` に成果物を出力（`sw.js`、`manifest.webmanifest`、PNG/MP3 などのプリキャッシュ）
 
-## コード雛形ジェネレータ（plop）
+その後 `package.json` と `docs/` をまとめてコミット → push。GitHub の Settings → Pages で `Deploy from a branch / main / /docs` を選んでおけば自動公開されます。
 
-```bash
-yarn plop component   # src/components/<dir>/<Name>/{Name.tsx, style.module.scss[, Name.stories.ts]}
-yarn plop page        # src/pages/<dir>/{index.tsx, style.module.scss}
-yarn plop logic       # src/logics/<name>/{<name>.tsx, <name>.test.ts}
-yarn plop api         # src/api/<name>.ts と src/types/<typeName>.ts
+> `vite.config.ts` の `BASE`（`/ochimono-game/`）と `src/main.tsx` の `basename`、`package.json` の `name` はリポジトリ名と一致している必要があります。
+
+## アセット（テーマ）の追加・差し替え
+
+アイテム画像はテーマディレクトリ単位でまとめて差し替える設計です。
+
+```
+public/
+└── images/
+    ├── gumi/             # 既定テーマ（グミ）
+    │   ├── level01.png   # 256×256 透過 PNG
+    │   ├── level02.png
+    │   ├── ...
+    │   └── level10.png
+    └── other/            # 追加テーマ（その他）
+        ├── level01.png
+        └── ...
 ```
 
-雛形は `templates/*.hbs` を編集すればプロジェクトの作法に合わせられます。
+### ファイル仕様
+
+| 項目 | 値 |
+|------|-----|
+| ファイル名 | `level01.png` 〜 `level10.png`（10 枚必須） |
+| サイズ | 256×256 px（正方形） |
+| フォーマット | PNG（RGBA、背景は透過） |
+| 想定マッピング | レベル 1..10 が小ハート / 小イチゴ / 小ネコ / 中ハート / ... / にゃんハートいちご |
+
+> サイズを変える場合は [`src/constants/items.ts`](src/constants/items.ts) の `ITEM_SPRITE_NATURAL_SIZE` も合わせて更新してください（スプライト拡大率の divisor）。
+
+### 既存アセットの画像だけ差し替える
+
+該当ディレクトリ内の `level{NN}.png` を同じファイル名・同じサイズで上書きするだけ。コード変更不要です。
+
+### 新しいテーマを追加する
+
+1. `public/images/{新id}/level01.png` 〜 `level10.png` を配置（id は英小文字＋ハイフン推奨）
+2. [`src/constants/themes.ts`](src/constants/themes.ts) の `THEMES` 配列に `{ id, label }` を追加
+
+これだけで画面右上の `<select>` に項目が現れ、選ぶと既存ボディの画像も即時差し替わります。
+
+```ts
+// 例
+export const THEMES = [
+  { id: 'gumi', label: 'グミ' },
+  { id: 'other', label: 'その他' },
+  { id: 'pixel', label: 'ピクセル' }, // 追加
+] as const;
+```
+
+選択中のテーマは `localStorage` (`ochimono.themeId`) に保存され、次回起動時にも復元されます。
+
+### SVG → PNG への一括変換が必要なときの参考
+
+`librsvg` が便利です（macOS / brew）:
+
+```bash
+brew install librsvg
+cd public/images/gumi
+for f in input/*.svg; do
+  rsvg-convert -w 256 -h 256 -o "${f%.svg}.png" "$f"
+done
+```
+
+## サウンドアセット
+
+合体時の効果音は `public/sounds/punyu.mp3` を 1 ファイル使います。差し替えるときは同じパスに上書きすれば OK。
+
+別の効果音を追加したい場合は [`src/hooks/useSound.ts`](src/hooks/useSound.ts) の `SOUND_PATHS` に kind を追加し、必要箇所で `play(kind)` を呼ぶ形になります。
+
+サウンド ON/OFF の状態は localStorage (`ochimono.isSoundOn`) に保存されます。
+
+## ゲーム設計の主な定数（チューニングポイント）
+
+| ファイル | 定数 | 用途 |
+|----------|------|------|
+| [`src/constants/items.ts`](src/constants/items.ts) | `ITEM_RADIUS` | レベル別の最大半径（px） |
+| 〃 | `ITEM_RESTITUTION` | レベル別のバウンド係数 |
+| 〃 | `MAX_DROPPABLE_LEVEL` | NEXT として落ちてくる最大レベル（既定 3＝レベル 4 以上は合体専用） |
+| 〃 | `REFERENCE_FIELD_WIDTH` | 半径の基準フィールド幅（既定 360px、これ以下では半径も比例縮小） |
+| 〃 | `ITEM_SPRITE_NATURAL_SIZE` | スプライト画像のナチュラルサイズ（既定 256） |
+| [`src/constants/physics.ts`](src/constants/physics.ts) | `gravityY` | 重力 |
+| 〃 | `gameOverLineOffset` | フィールド上端からゲームオーバーラインまでの距離（px） |
+| 〃 | `gameOverGracePeriodMs` | 落下直後のゲームオーバー判定無効時間 |
+| [`src/constants/game.ts`](src/constants/game.ts) | `dropCooldownMs` | 連続落下のクールダウン |
+| 〃 | `mergeEffectDurationMs` | 合体エフェクトの表示時間 |
 
 ## ディレクトリ構成
 
 ```
 .
-├── .husky/                  # Git hooks (pre-commit で fix + lint-staged)
-├── .github/
-│   └── pull_request_template.md
 ├── public/
-│   └── robots.txt           # アイコン類はここに置く（templates 外）
+│   ├── icon-192.png / icon-512.png   # PWA アイコン
+│   ├── images/<themeId>/level01〜10.png  # アイテム画像（テーマ単位）
+│   ├── sounds/punyu.mp3              # 合体音
+│   └── robots.txt
+├── scripts/
+│   └── bump-patch-version.mjs        # build 前に package.json の patch を +1
 ├── src/
-│   ├── main.tsx             # エントリポイント (BrowserRouter basename="/__REPO_NAME__")
-│   ├── App.tsx              # 最小ルーティング（Home + NotFound）
-│   ├── _variables.scss      # SCSS 変数とブレークポイント mixin
+│   ├── main.tsx                      # エントリ（BrowserRouter basename="/ochimono-game"）
+│   ├── App.tsx
+│   ├── index.scss                    # グローバル reset
+│   ├── _variables.scss               # SCSS 変数 / レスポンシブ mixin
 │   ├── pages/
-│   │   ├── home/
+│   │   ├── home/                     # ゲーム画面
 │   │   └── not-found/
-│   ├── setupTests.ts        # Vitest 用セットアップ (jest-dom)
-│   └── vite-env.d.ts
-├── templates/               # plop の hbs 雛形
-├── index.html               # Vite のエントリ HTML（ルート直下）
-├── vite.config.ts           # Vite + PWA + Vitest 設定
-├── eslint.config.js         # ESLint v9 flat config
-├── tsconfig.json            # 親（references のみ）
-├── tsconfig.app.json        # アプリ用（src/）
-├── tsconfig.node.json       # vite.config.ts 用
-└── check-node-version.sh    # preinstall で実行
+│   ├── components/
+│   │   ├── Layout/GameLayout/        # レイアウト・サイズ計測
+│   │   ├── Game/GameField/           # Matter.js キャンバス + ポインタ操作
+│   │   ├── Game/DropIndicator/       # 落下位置インジケーター
+│   │   ├── UI/TopBar/                # スコア / NEXT / テーマ切替 / サウンド
+│   │   ├── UI/ScoreDisplay/
+│   │   ├── UI/NextItemPreview/
+│   │   ├── UI/ThemeToggle/           # アセットテーマ切替
+│   │   ├── UI/SoundToggle/
+│   │   ├── Effects/MergeEffect/      # 合体時のリング / +スコア
+│   │   └── Overlay/                  # StartScreen / GameOverScreen
+│   ├── hooks/
+│   │   ├── useGame.ts                # Matter.js セットアップ + 合体 / GameOver
+│   │   ├── useScore.ts
+│   │   └── useSound.ts
+│   ├── constants/
+│   │   ├── items.ts                  # アイテム定義
+│   │   ├── themes.ts                 # アセットテーマ
+│   │   ├── physics.ts
+│   │   └── game.ts
+│   ├── types/                        # ItemDefinition 等
+│   ├── utils/                        # storage / score / physics ヘルパ
+│   └── setupTests.ts
+├── docs/                             # ビルド出力（GitHub Pages 公開元）
+├── vite.config.ts                    # Vite + PWA + Vitest
+├── eslint.config.js                  # ESLint v9 flat config
+└── package.json
 ```
 
-## SCSS の import について
+## コード雛形ジェネレータ（plop）
 
-Vite の `css.preprocessorOptions.scss.loadPaths` に `src/` を入れているので、変数モジュールは下記のように **prefix なし**で参照できます：
+```bash
+yarn plop component   # src/components/<dir>/<Name>/{Name.tsx, style.module.scss}
+yarn plop page        # src/pages/<dir>/{index.tsx, style.module.scss}
+yarn plop logic       # src/logics/<name>/{<name>.ts, <name>.test.ts}
+yarn plop api         # src/api/<name>.ts + src/types/<typeName>.ts
+yarn plop type        # src/types/<name>.ts
+```
+
+雛形本体は `templates/*.hbs`。
+
+## SCSS の import
+
+`src/` を SCSS の load path に入れているので、変数モジュールは prefix なしで `@use` できます：
 
 ```scss
 @use 'variables' as var;
@@ -150,13 +219,3 @@ Vite の `css.preprocessorOptions.scss.loadPaths` に `src/` を入れている�
   color: var.$primary;
 }
 ```
-
-別ファイルを参照する場合は通常通り相対パス or `@/...` 形式（後者は `src/` 直下からの絶対パス的に解決）を使ってください。
-
-## TODO
-
-テンプレ利用者が必要に応じて追加する機能：
-
-- [ ] CI（GitHub Actions）：`yarn lint` / `yarn test` / `yarn build` をプルリクで自動実行
-- [ ] Storybook：`templates/component/component.stories.ts.hbs` がある前提なので、必要なら導入
-- [ ] PWA インストールプロンプト UI：`vite-plugin-pwa` の `useRegisterSW` フックを使って "新しいバージョンが利用可能" のトーストを出すなど

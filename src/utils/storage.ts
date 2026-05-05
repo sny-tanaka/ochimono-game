@@ -1,4 +1,5 @@
 import { GAME } from '@/constants/game';
+import { DEFAULT_THEME_ID, isThemeId, type ThemeId } from '@/constants/themes';
 
 const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
@@ -57,4 +58,13 @@ export const loadIsSoundOn = (): boolean => {
 
 export const saveIsSoundOn = (value: boolean): void => {
   safeSet(GAME.storageKeys.isSoundOn, String(value));
+};
+
+export const loadThemeId = (): ThemeId => {
+  const raw = safeGet(GAME.storageKeys.themeId);
+  return isThemeId(raw) ? raw : DEFAULT_THEME_ID;
+};
+
+export const saveThemeId = (value: ThemeId): void => {
+  safeSet(GAME.storageKeys.themeId, value);
 };

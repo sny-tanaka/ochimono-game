@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
@@ -8,8 +9,17 @@ import { defineConfig } from 'vitest/config';
 // 例: https://<user>.github.io/ochimono-game/
 const BASE = '/ochimono-game/';
 
+// package.json の version を __APP_VERSION__ として注入する。
+// `yarn build` の前段で scripts/bump-patch-version.mjs が patch を上げるので、
+// 毎回のビルドで自動的に値が更新される。
+const PKG_VERSION = JSON.parse(readFileSync(path.resolve(__dirname, './package.json'), 'utf8'))
+  .version as string;
+
 export default defineConfig({
   base: BASE,
+  define: {
+    __APP_VERSION__: JSON.stringify(PKG_VERSION),
+  },
   plugins: [
     react(),
     VitePWA({

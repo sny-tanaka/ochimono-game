@@ -1,27 +1,27 @@
 if (!self.define) {
   let e,
     i = {};
-  const s = (s, r) => (
-    (s = new URL(s + '.js', r).href),
-    i[s] ||
+  const a = (a, r) => (
+    (a = new URL(a + '.js', r).href),
+    i[a] ||
       new Promise((i) => {
         if ('document' in self) {
           const e = document.createElement('script');
-          ((e.src = s), (e.onload = i), document.head.appendChild(e));
-        } else ((e = s), importScripts(s), i());
+          ((e.src = a), (e.onload = i), document.head.appendChild(e));
+        } else ((e = a), importScripts(a), i());
       }).then(() => {
-        let e = i[s];
-        if (!e) throw new Error(`Module ${s} didn’t register its module`);
+        let e = i[a];
+        if (!e) throw new Error(`Module ${a} didn’t register its module`);
         return e;
       })
   );
-  self.define = (r, a) => {
-    const c = e || ('document' in self ? document.currentScript.src : '') || location.href;
-    if (i[c]) return;
-    let n = {};
-    const f = (e) => s(e, c),
-      t = { module: { uri: c }, exports: n, require: f };
-    i[c] = Promise.all(r.map((e) => t[e] || f(e))).then((e) => (a(...e), n));
+  self.define = (r, l) => {
+    const n = e || ('document' in self ? document.currentScript.src : '') || location.href;
+    if (i[n]) return;
+    let s = {};
+    const d = (e) => a(e, n),
+      b = { module: { uri: n }, exports: s, require: d };
+    i[n] = Promise.all(r.map((e) => b[e] || d(e))).then((e) => (l(...e), s));
   };
 }
 define(['./workbox-8c29f6e4'], function (e) {
@@ -31,30 +31,31 @@ define(['./workbox-8c29f6e4'], function (e) {
     e.precacheAndRoute(
       [
         { url: 'registerSW.js', revision: '6c365df04952b818a480a3b287e93568' },
-        { url: 'index.html', revision: '3193cfdff455892a5776b2510e6fd431' },
+        { url: 'index.html', revision: '407a7c4a9f2651b4f845b605c55338a9' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
-        { url: 'images/gumi/item_10_special.svg', revision: '2d4a083747b65f5cb7631b21e4896b15' },
-        { url: 'images/gumi/item_09_cat_l.svg', revision: '04495bd48f3d13b0883c198ae5c7aa86' },
-        {
-          url: 'images/gumi/item_08_strawberry_l.svg',
-          revision: 'c168692493c45bdf3cc945b573e11c89',
-        },
-        { url: 'images/gumi/item_07_heart_l.svg', revision: '2fb6c705bbf4d79acabad740388c9efc' },
-        { url: 'images/gumi/item_06_cat_m.svg', revision: '0719fa89cc9bac47e58fb9b727138b5c' },
-        {
-          url: 'images/gumi/item_05_strawberry_m.svg',
-          revision: '4f024f78956c92b3f26d555f1dd72fd1',
-        },
-        { url: 'images/gumi/item_04_heart_m.svg', revision: '069531daa60d1c3381fd7c077744f351' },
-        { url: 'images/gumi/item_03_cat_s.svg', revision: '405174eba0df75d10a6e4da70d944359' },
-        {
-          url: 'images/gumi/item_02_strawberry_s.svg',
-          revision: 'c302e6c2f960fea748b2a0aca03f3982',
-        },
-        { url: 'images/gumi/item_01_heart_s.svg', revision: '44bab915a76475cd6968cdc8d3145199' },
-        { url: 'assets/index-nQwWiKfY.css', revision: null },
-        { url: 'assets/index-BOV-7yA5.js', revision: null },
+        { url: 'images/other/level10.png', revision: '697a079a30a8ef809ccaed1c4da4b0b7' },
+        { url: 'images/other/level09.png', revision: '0e8753d7362998d6fd892022523bc0c3' },
+        { url: 'images/other/level08.png', revision: '17d5f7450eb28369e3cd17808d2981ad' },
+        { url: 'images/other/level07.png', revision: 'bdffa3b97e21e83a09f813af2ab74df8' },
+        { url: 'images/other/level06.png', revision: 'aa12678a0d92d81e828fdc6eba1bed20' },
+        { url: 'images/other/level05.png', revision: 'a78f24610b4cb8bf32c4d06d90c67c05' },
+        { url: 'images/other/level04.png', revision: 'a79fb4ccb30d33181ba0205bae7b2ae1' },
+        { url: 'images/other/level03.png', revision: '94f2b802e9146566e2d869cdadc2ed46' },
+        { url: 'images/other/level02.png', revision: '27de8023b13180567a123b5f3278d6ae' },
+        { url: 'images/other/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
+        { url: 'images/gumi/level10.png', revision: '697a079a30a8ef809ccaed1c4da4b0b7' },
+        { url: 'images/gumi/level09.png', revision: '0e8753d7362998d6fd892022523bc0c3' },
+        { url: 'images/gumi/level08.png', revision: '17d5f7450eb28369e3cd17808d2981ad' },
+        { url: 'images/gumi/level07.png', revision: 'bdffa3b97e21e83a09f813af2ab74df8' },
+        { url: 'images/gumi/level06.png', revision: 'aa12678a0d92d81e828fdc6eba1bed20' },
+        { url: 'images/gumi/level05.png', revision: 'a78f24610b4cb8bf32c4d06d90c67c05' },
+        { url: 'images/gumi/level04.png', revision: 'a79fb4ccb30d33181ba0205bae7b2ae1' },
+        { url: 'images/gumi/level03.png', revision: '94f2b802e9146566e2d869cdadc2ed46' },
+        { url: 'images/gumi/level02.png', revision: '27de8023b13180567a123b5f3278d6ae' },
+        { url: 'images/gumi/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
+        { url: 'assets/index-lWR4Ocvm.css', revision: null },
+        { url: 'assets/index-Bk9ajiSK.js', revision: null },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'robots.txt', revision: 'fa1ded1ed7c11438a9b0385b1e112850' },

@@ -21,6 +21,8 @@ const GameContent = ({ size }: { size: Size }) => {
         nextItem={game.nextItem}
         isSoundOn={game.isSoundOn}
         onToggleSound={game.toggleSound}
+        themeId={game.themeId}
+        onChangeTheme={game.setThemeId}
       />
       <main className={styles.main}>
         <div

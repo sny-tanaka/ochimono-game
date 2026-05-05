@@ -1,0 +1,28 @@
+@use 'variables' as var;
+
+.toggle {
+  // SoundToggle と高さを揃える（40px）。padding は border-box で含める。
+  box-sizing: border-box;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(107, 79, 160, 0.25);
+  background: rgba(255, 255, 255, 0.85);
+  color: #4a3370;
+  padding: 0 28px 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='none' stroke='%236b4fa0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 7px;
+  box-shadow: 0 2px 6px rgba(107, 79, 160, 0.15);
+
+  &:focus-visible {
+    outline: 2px solid #6b4fa0;
+    outline-offset: 2px;
+  }
+}

@@ -2,22 +2,29 @@ import Matter from 'matter-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GAME } from '@/constants/game';
-import { itemForFieldWidth, MAX_DROPPABLE_LEVEL, MAX_ITEM_LEVEL } from '@/constants/items';
+import {
+  ITEM_SPRITE_NATURAL_SIZE,
+  itemForFieldWidth,
+  MAX_DROPPABLE_LEVEL,
+  MAX_ITEM_LEVEL,
+} from '@/constants/items';
 import { PHYSICS } from '@/constants/physics';
+import { type ThemeId } from '@/constants/themes';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
 import type { GameStatus, MergeEffect } from '@/types/game';
 import type { ItemDefinition } from '@/types/item';
 import { createItemBody, createWalls, getItemDataFromBody, midpoint } from '@/utils/physics';
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
+import { loadThemeId, saveThemeId } from '@/utils/storage';
 
 // SVG パス（public 配下）に base URL を付与
 const resolveTexturePath = (svgPath: string): string =>
   `${import.meta.env.BASE_URL}${svgPath}`.replace(/\/{2,}/g, '/');
 
 const applySprite = (body: Matter.Body, item: ItemDefinition) => {
-  // SVG は width/height="100" を明示しているので natural サイズは 100×100
-  const scale = (item.radius * 2) / 100;
+  // PNG のナチュラルサイズに対して直径 (radius * 2) になるよう拡大率を決める
+  const scale = (item.radius * 2) / ITEM_SPRITE_NATURAL_SIZE;
   // xOffset/yOffset を 0.5 にしないと Matter.Render の drawImage が NaN になる
   // （body.render.sprite を後から代入する形式だと既定値が引き継がれない）。
   // @types/matter-js には xOffset/yOffset が無いためキャストで回避。
@@ -38,12 +45,14 @@ export type UseGameResult = {
   currentItem: ItemDefinition | null;
   nextItem: ItemDefinition | null;
   isSoundOn: boolean;
+  themeId: ThemeId;
   mergeEffects: MergeEffect[];
   canvasContainerRef: React.RefObject<HTMLDivElement | null>;
   drop: (xRatio: number) => void;
   start: () => void;
   restart: () => void;
   toggleSound: () => void;
+  setThemeId: (id: ThemeId) => void;
   fieldWidth: number;
   fieldHeight: number;
   gameOverLineY: number;
@@ -74,12 +83,17 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const fieldWidthRef = useRef(fieldWidth);
   const fieldHeightRef = useRef(fieldHeight);
 
+  // テーマ ID。初期値は localStorage 由来。lazy init で初回フラッシュを避ける。
+  const [themeId, setThemeIdState] = useState<ThemeId>(() => loadThemeId());
+  const themeIdRef = useRef<ThemeId>(themeId);
+  themeIdRef.current = themeId;
+
   const score = useScore();
   const sound = useSound();
 
   const pickRandomDroppable = (): ItemDefinition => {
     const level = Math.floor(Math.random() * MAX_DROPPABLE_LEVEL) + 1;
-    return itemForFieldWidth(level, fieldWidthRef.current);
+    return itemForFieldWidth(level, fieldWidthRef.current, themeIdRef.current);
   };
 
   // セットアップ：Engine / Render / Runner / 壁
@@ -179,7 +193,11 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         isSpecial = true;
         sound.play('special');
       } else {
-        const mergedItem = itemForFieldWidth(mergedLevel, fieldWidthRef.current);
+        const mergedItem = itemForFieldWidth(
+          mergedLevel,
+          fieldWidthRef.current,
+          themeIdRef.current
+        );
         const newBody = createItemBody(mergedItem, center.x, center.y, performance.now());
         applySprite(newBody, mergedItem);
         Matter.World.add(engine.world, newBody);
@@ -262,6 +280,31 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     };
   }, []);
 
+  // テーマ切り替え時：物理世界の既存ボディの sprite と、UI が参照する currentItem/nextItem を
+  // 新テーマのパスに張り替える。半径や物理パラメータは触らない。
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (engine) {
+      for (const body of Matter.Composite.allBodies(engine.world)) {
+        const data = getItemDataFromBody(body);
+        if (!data || data.consumed) continue;
+        const item = itemForFieldWidth(data.level, fieldWidthRef.current, themeId);
+        applySprite(body, item);
+      }
+    }
+    setCurrentItem((prev) =>
+      prev ? itemForFieldWidth(prev.level, fieldWidthRef.current, themeId) : null
+    );
+    setNextItem((prev) =>
+      prev ? itemForFieldWidth(prev.level, fieldWidthRef.current, themeId) : null
+    );
+  }, [themeId]);
+
+  const setThemeId = useCallback((next: ThemeId) => {
+    setThemeIdState(next);
+    saveThemeId(next);
+  }, []);
+
   const drop = useCallback(
     (xRatio: number) => {
       const engine = engineRef.current;
@@ -334,12 +377,14 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     currentItem,
     nextItem,
     isSoundOn: sound.isSoundOn,
+    themeId,
     mergeEffects,
     canvasContainerRef,
     drop,
     start,
     restart,
     toggleSound: sound.toggle,
+    setThemeId,
     fieldWidth,
     fieldHeight,
     gameOverLineY,

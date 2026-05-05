@@ -13954,7 +13954,7 @@ const Gp = ({
           ie.jsxs('span', {
             className: oo.version,
             'aria-label': 'ビルドバージョン',
-            children: ['v', '1.0.10'],
+            children: ['v', '1.0.11'],
           }),
         ],
       }),

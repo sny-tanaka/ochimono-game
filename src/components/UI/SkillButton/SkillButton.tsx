@@ -47,11 +47,19 @@ export const SkillButton = memo(({ gauge, segmentMax, segmentCount, canOpen, onC
     const v = Math.max(0, Math.min(segmentMax, gauge - lo));
     return v / segmentMax;
   });
+  const filledCount = segmentRatios.filter((r) => r >= 1).length;
+  const isFullyReady = filledCount === segmentCount;
 
   return (
     <button
       type="button"
-      className={`${styles.button} ${canOpen ? styles.ready : ''}`}
+      className={[
+        styles.button,
+        canOpen ? styles.ready : '',
+        isFullyReady ? styles.fully_ready : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       onClick={onClick}
       disabled={!canOpen}
       aria-label={canOpen ? '必殺技を選択' : `必殺技ゲージ ${percent}%`}

@@ -2,17 +2,8 @@ import type { ItemDefinition } from '@/types/item';
 
 export type GameStatus = 'idle' | 'playing' | 'gameover';
 
-// 合体時に画面上に表示するエフェクトの 1 件分
-export type MergeEffect = {
-  id: string;
-  x: number;
-  y: number;
-  level: number;
-  score: number;
-  isSpecial: boolean;
-  createdAt: number;
-};
-
+// ゲーム全体の状態スナップショット（現状は未使用だが、デバッグ・計測時の型として残す）。
+// 合体エフェクトは React state で管理しなくなったため、このスナップショットには含めない。
 export type GameState = {
   status: GameStatus;
   score: number;
@@ -20,6 +11,5 @@ export type GameState = {
   currentItem: ItemDefinition | null;
   nextItem: ItemDefinition | null;
   canDrop: boolean;
-  mergeEffects: MergeEffect[];
   isSoundOn: boolean;
 };

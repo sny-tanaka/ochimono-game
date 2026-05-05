@@ -35,7 +35,7 @@ const GameContent = ({ size }: { size: Size }) => {
             fieldHeight={size.height}
             gameOverLineY={game.gameOverLineY}
             currentItem={game.currentItem}
-            mergeEffects={game.mergeEffects}
+            mergeEffectRef={game.mergeEffectRef}
             canInteract={game.status === 'playing'}
             onDrop={game.drop}
           />

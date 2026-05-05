@@ -125,15 +125,32 @@ export const computeRadiusScale = (fieldWidth: number): number =>
 
 // レベル / 実フィールド幅 / テーマから ItemDefinition を生成する。
 // radius は基準フィールド幅に応じて縮小、svgPath はテーマに応じて差し替え。
+//
+// 連打ドロップ時に毎フレーム呼ばれてもオブジェクトが新規生成されないよう、
+// (level, fieldWidth, themeId) をキーにした Map で結果を memoize する。
+// 同じ参照を返すことで、`<NextItemPreview>` 等の React.memo / useMemo の再評価を抑える。
+const itemForFieldWidthCache = new Map<string, ItemDefinition>();
+
 export const itemForFieldWidth = (
   level: number,
   fieldWidth: number,
   themeId: ThemeId = DEFAULT_THEME_ID
 ): ItemDefinition => {
+  const cacheKey = `${level}|${fieldWidth}|${themeId}`;
+  const cached = itemForFieldWidthCache.get(cacheKey);
+  if (cached) return cached;
+
   const base = ITEMS[level];
-  return {
+  const item: ItemDefinition = {
     ...base,
     radius: base.radius * computeRadiusScale(fieldWidth),
     svgPath: imagePathForTheme(themeId, level),
   };
+  itemForFieldWidthCache.set(cacheKey, item);
+  return item;
+};
+
+// テスト用：キャッシュをクリアする。プロダクションコードからは呼ばない想定。
+export const __clearItemForFieldWidthCache = () => {
+  itemForFieldWidthCache.clear();
 };

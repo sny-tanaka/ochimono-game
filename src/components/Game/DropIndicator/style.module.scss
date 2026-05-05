@@ -2,17 +2,31 @@
 
 .line {
   position: absolute;
+  // top/left はインラインの transform で制御する。
+  // 旧実装の `left: ${x}px` と等価になるよう、原点を 0 にしておく。
   top: 0;
+  left: 0;
   width: 0;
   border-left: 1.5px dashed rgba(107, 79, 160, 0.45);
   pointer-events: none;
+  // pointermove ごとの transform 更新をコンポジタレイヤに乗せる。
+  will-change: transform;
+}
+
+.preview_wrap {
+  // 旧実装で <img> に当てていた `top: 4px; left: ${x - radius}px` の挙動を担当する。
+  position: absolute;
+  top: 4px;
+  left: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(107, 79, 160, 0.3));
+  will-change: transform;
 }
 
 .preview {
-  position: absolute;
-  top: 4px;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 4px rgba(107, 79, 160, 0.3));
+  width: 100%;
+  height: 100%;
+  // wrap 側で位置決め、こちらは bob アニメーションだけ担当する（transform 競合回避）。
   animation: bob 1.2s ease-in-out infinite;
 }
 

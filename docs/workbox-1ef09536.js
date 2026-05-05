@@ -713,9 +713,6 @@ define(['exports'], function (t) {
         );
       });
     }),
-    (t.clientsClaim = function () {
-      self.addEventListener('activate', () => self.clients.claim());
-    }),
     (t.createHandlerBoundToURL = function (t) {
       return N().createHandlerBoundToURL(t);
     }),

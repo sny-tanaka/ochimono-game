@@ -15,7 +15,7 @@ vi.mock('@/hooks/useGame', () => ({
     nextItem: null,
     isSoundOn: true,
     themeId: 'gumi',
-    mergeEffects: [],
+    mergeEffectRef: { current: null },
     canvasContainerRef: { current: null },
     drop: () => {},
     start: () => {},

@@ -63,6 +63,14 @@ yarn build
 
 > `vite.config.ts` の `BASE`（`/ochimono-game/`）と `src/main.tsx` の `basename`、`package.json` の `name` はリポジトリ名と一致している必要があります。
 
+### PWA の更新通知
+
+`registerType: 'prompt'` 設定なので、新しいビルドが見つかっても自動では適用されません。
+画面を開いた時点で SW が更新を検出すると、画面下に「新しいバージョンがあります／更新」のバナーが出ます（[`AppUpdater`](src/components/AppUpdater/AppUpdater.tsx)）。
+ユーザーが更新ボタンを押すと `skipWaiting` → `clientsClaim` → ページ再読み込みが走り、最新ビルドに切り替わります。
+
+定期的なバックグラウンドチェックは行いません（必要なら `useRegisterSW({ onRegisteredSW })` の callback で `setInterval(() => registration.update(), N)` を追加するだけ）。
+
 ## アセット（テーマ）の追加・差し替え
 
 アイテム画像はテーマディレクトリ単位でまとめて差し替える設計です。

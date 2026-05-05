@@ -70,4 +70,18 @@ describe('itemForFieldWidth', () => {
     const item = itemForFieldWidth(7, REFERENCE_FIELD_WIDTH, 'other');
     expect(item.svgPath).toBe('images/other/level07.png');
   });
+
+  test('同じ (level, fieldWidth, themeId) は同一参照を返す（メモ化）', () => {
+    const a = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'gumi');
+    const b = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'gumi');
+    expect(a).toBe(b);
+  });
+
+  test('キーが違えば別参照を返す', () => {
+    const a = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'gumi');
+    const b = itemForFieldWidth(3, REFERENCE_FIELD_WIDTH, 'other');
+    const c = itemForFieldWidth(4, REFERENCE_FIELD_WIDTH, 'gumi');
+    expect(a).not.toBe(b);
+    expect(a).not.toBe(c);
+  });
 });

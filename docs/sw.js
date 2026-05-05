@@ -20,20 +20,21 @@ if (!self.define) {
     if (i[n]) return;
     let s = {};
     const d = (e) => a(e, n),
-      b = { module: { uri: n }, exports: s, require: d };
-    i[n] = Promise.all(r.map((e) => b[e] || d(e))).then((e) => (l(...e), s));
+      o = { module: { uri: n }, exports: s, require: d };
+    i[n] = Promise.all(r.map((e) => o[e] || d(e))).then((e) => (l(...e), s));
   };
 }
-define(['./workbox-8c29f6e4'], function (e) {
+define(['./workbox-1ef09536'], function (e) {
   'use strict';
-  (self.skipWaiting(),
-    e.clientsClaim(),
+  (self.addEventListener('message', (e) => {
+    e.data && 'SKIP_WAITING' === e.data.type && self.skipWaiting();
+  }),
     e.precacheAndRoute(
       [
-        { url: 'registerSW.js', revision: '6c365df04952b818a480a3b287e93568' },
-        { url: 'index.html', revision: '407a7c4a9f2651b4f845b605c55338a9' },
+        { url: 'index.html', revision: '93b1fcce5724741358684950b9584618' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
+        { url: 'sounds/punyu.mp3', revision: 'a36dc54f82e9199637f75dad46b2d7c9' },
         { url: 'images/other/level10.png', revision: '697a079a30a8ef809ccaed1c4da4b0b7' },
         { url: 'images/other/level09.png', revision: '0e8753d7362998d6fd892022523bc0c3' },
         { url: 'images/other/level08.png', revision: '17d5f7450eb28369e3cd17808d2981ad' },
@@ -54,8 +55,9 @@ define(['./workbox-8c29f6e4'], function (e) {
         { url: 'images/gumi/level03.png', revision: '94f2b802e9146566e2d869cdadc2ed46' },
         { url: 'images/gumi/level02.png', revision: '27de8023b13180567a123b5f3278d6ae' },
         { url: 'images/gumi/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
-        { url: 'assets/index-lWR4Ocvm.css', revision: null },
-        { url: 'assets/index-Bk9ajiSK.js', revision: null },
+        { url: 'assets/workbox-window.prod.es5-BIl4cyR9.js', revision: null },
+        { url: 'assets/index-CMSe-DIf.js', revision: null },
+        { url: 'assets/index-CE7q-SDE.css', revision: null },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'robots.txt', revision: 'fa1ded1ed7c11438a9b0385b1e112850' },

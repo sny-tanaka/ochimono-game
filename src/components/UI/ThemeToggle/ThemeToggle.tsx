@@ -1,4 +1,4 @@
-import { type ChangeEvent } from 'react';
+import { memo, type ChangeEvent } from 'react';
 
 import styles from './style.module.scss';
 
@@ -9,7 +9,8 @@ type Props = {
   onChange: (id: ThemeId) => void;
 };
 
-export const ThemeToggle = ({ value, onChange }: Props) => {
+// score 変動などで親が再レンダーされても、value/onChange が同じなら何もしない。
+export const ThemeToggle = memo(({ value, onChange }: Props) => {
   const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const next = e.target.value;
     if (isThemeId(next)) onChange(next);
@@ -32,4 +33,5 @@ export const ThemeToggle = ({ value, onChange }: Props) => {
       ))}
     </select>
   );
-};
+});
+ThemeToggle.displayName = 'ThemeToggle';

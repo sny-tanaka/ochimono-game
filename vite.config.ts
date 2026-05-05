@@ -23,8 +23,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // 新しいビルドが見つかったら、即時自動適用ではなく明示的なボタンで更新させる。
+      // SW 登録は useRegisterSW（virtual:pwa-register/react）から行うため
+      // injectRegister は false にして二重登録を防ぐ。
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['robots.txt', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: '💖 にゃんハートいちごパズル',
@@ -57,7 +60,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,mp3}'],
+        // 古いビルドのキャッシュエントリを削除して容量肥大化を防ぐ
+        cleanupOutdatedCaches: true,
       },
       // 開発中も PWA を有効にしたい場合は devOptions.enabled: true にする。
       // 通常は古い SW がキャッシュを返して "変更が反映されない" 事故になりがちなので無効にしておく。

@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import styles from './style.module.scss';
 
 type Props = {
@@ -5,7 +7,9 @@ type Props = {
   bestScore: number;
 };
 
-export const ScoreDisplay = ({ score, bestScore }: Props) => {
+// score / bestScore が同値なら再レンダー不要。memo 化しても自身は score 変動で再レンダーされるが、
+// 兄弟要素（NextItemPreview など）への影響はない。
+export const ScoreDisplay = memo(({ score, bestScore }: Props) => {
   return (
     <div className={styles.score_display}>
       <div className={styles.row}>
@@ -23,4 +27,5 @@ export const ScoreDisplay = ({ score, bestScore }: Props) => {
       </div>
     </div>
   );
-};
+});
+ScoreDisplay.displayName = 'ScoreDisplay';

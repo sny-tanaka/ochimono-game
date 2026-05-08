@@ -53,18 +53,42 @@ const applySprite = (body: Matter.Body, item: ItemDefinition) => {
   } as Matter.IBodyRenderOptionsSprite;
 };
 
-// 全テーマ × 全レベルの PNG をブラウザに先読みさせる。
-// 初回合体時にブラウザの decode コストで Matter のフレームが詰まるのを防ぐ。
+// 全テーマ × 全レベルの PNG を先読みする。
+// `createImageBitmap` で「メインスレッドを止めずに」 decode し、結果の `ImageBitmap` を
+// Matter.Render のテクスチャキャッシュ (`render.textures[url]`) に直接登録する。
+// これにより Matter._getTexture が初使用時に `new Image()` を作って decode するパスが
+// スキップされ、合体時のフレーム詰まり（特に大きい PNG: level08 / level10）が緩和される。
 const preloadedTextures = new Set<string>();
-const preloadTexturesForTheme = (themeId: ThemeId) => {
+const preloadTexturesForTheme = async (
+  themeId: ThemeId,
+  render: Matter.Render | null
+): Promise<void> => {
   for (let level = 1; level <= MAX_ITEM_LEVEL; level += 1) {
     // svgPath は items の imagePathForTheme と同形式。Item を生成して URL だけ拾う。
     const item = itemForFieldWidth(level, 1, themeId);
     const url = resolveTextureUrlCached(item.svgPath);
     if (preloadedTextures.has(url)) continue;
     preloadedTextures.add(url);
-    const img = new Image();
-    img.src = url;
+
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      // ブラウザ実装によっては Worker / 別スレッドで decode されるため、
+      // メインスレッドが大きい PNG のデコードでブロックされない。
+      const bitmap = await createImageBitmap(blob);
+      // Matter.Render の textures キャッシュに直接登録。
+      // `_getTexture` は登録済みオブジェクトをそのまま返し、`drawImage` は
+      // `ImageBitmap` も `HTMLImageElement` も同様に受け付ける。
+      // 型定義 (@types/matter-js) に textures は含まれていないため as でキャスト。
+      if (render) {
+        (render as unknown as { textures: Record<string, ImageBitmap> }).textures[url] = bitmap;
+      }
+    } catch {
+      // createImageBitmap 不可 / fetch 失敗時のフォールバック: 従来の Image 方式。
+      // ブラウザに勝手にロード・decode させて Matter._getTexture 任せにする。
+      const img = new Image();
+      img.src = url;
+    }
   }
 };
 
@@ -297,7 +321,8 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
 
     // 全テーマのテクスチャを先読みして初回 decode コストを排除。
     // start 前から先読みしておけばテーマ切替直後の表示も滑らか。
-    for (const t of THEMES) preloadTexturesForTheme(t.id);
+    // 非同期でバックグラウンド処理にするので await はしない。
+    for (const t of THEMES) void preloadTexturesForTheme(t.id, render);
 
     // タブ・アプリ非アクティブ時は物理計算もレンダリングも止めて発熱・電池消費を抑える。
     // 復帰時はそのまま再開（経過時間で大幅にズレないよう Runner の dt に頼る）。
@@ -529,8 +554,8 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   useEffect(() => {
     const engine = engineRef.current;
     if (engine) {
-      // テーマ切替時のテクスチャ先読み
-      preloadTexturesForTheme(themeId);
+      // テーマ切替時のテクスチャ先読み（バックグラウンド）
+      void preloadTexturesForTheme(themeId, renderRef.current);
       for (const body of itemBodiesRef.current) {
         const data = getItemDataFromBody(body);
         if (!data || data.consumed) continue;

@@ -15,11 +15,18 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 12px;
-  height: 12px;
-  border: 3px solid #ffd6f4;
+  // 最終形のサイズで固定する。アニメは transform: scale で行うため width/height は変えない。
+  // width/height を keyframes で動かすと毎フレーム Layout + Paint が発生するが、
+  // transform は Composite だけで済むので mobile でフレームが詰まりにくい。
+  width: 120px;
+  height: 120px;
+  // border 太さも固定（keyframes で動かすと paint が走る）。
+  // 元実装の 1px〜3px 範囲の中間値で見た目の違いを最小化。
+  border: 2px solid #ffd6f4;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
+  // 元実装: 12px → 120px の拡大なので 12/120 = 0.1 倍からスタートする。
+  // translate(-50%, -50%) は中心位置決め用。scale と合成する。
+  transform: translate(-50%, -50%) scale(0.1);
   animation: ring 0.7s ease-out forwards;
 }
 
@@ -48,16 +55,12 @@
 
 @keyframes ring {
   0% {
-    width: 12px;
-    height: 12px;
+    transform: translate(-50%, -50%) scale(0.1);
     opacity: 0.9;
-    border-width: 3px;
   }
   100% {
-    width: 120px;
-    height: 120px;
+    transform: translate(-50%, -50%) scale(1);
     opacity: 0;
-    border-width: 1px;
   }
 }
 

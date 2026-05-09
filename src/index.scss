@@ -9,4 +9,15 @@ html,
 body {
   margin: 0;
   padding: 0;
+  // スマホで縦にスクロールできてしまう（コンテンツが画面に収まっていても rubber-band で動く）
+  // のを完全に抑止する。
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  // ゲームなので文字選択 / コピー / iOS の長押しメニューを禁止する。
+  // ・user-select: スコア等のテキストを長押し / ドラッグで選択させない
+  // ・-webkit-touch-callout: iOS で長押し時に出るリンク / 画像メニューを抑止
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }

@@ -14023,7 +14023,7 @@ const Kh = N.memo(
               }),
               $.jsx('footer', {
                 className: rn.footer,
-                children: $.jsxs('span', { className: rn.version, children: ['v', '1.0.22'] }),
+                children: $.jsxs('span', { className: rn.version, children: ['v', '1.0.23'] }),
               }),
             ],
           }),

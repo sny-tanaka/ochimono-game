@@ -1511,7 +1511,7 @@ Error generating stack: ` +
           : a
     );
   }
-  function he(e, t) {
+  function me(e, t) {
     return (e.pendingLanes & ~(e.suspendedLanes & ~e.pingedLanes) & t) === 0;
   }
   function Te(e, t) {
@@ -3686,7 +3686,7 @@ Error generating stack: ` +
         fe
       );
     }
-    function me(q, Y, X, P) {
+    function he(q, Y, X, P) {
       if (X == null) throw Error(x(151));
       for (
         var fe = null, De = null, ce = Y, Se = (Y = 0), _e = null, ze = X.next();
@@ -3795,7 +3795,7 @@ Error generating stack: ` +
         if (ee(X)) return re(q, Y, X, P);
         if (G(X)) {
           if (((fe = G(X)), typeof fe != 'function')) throw Error(x(150));
-          return ((X = fe.call(X)), me(q, Y, X, P));
+          return ((X = fe.call(X)), he(q, Y, X, P));
         }
         if (typeof X.then == 'function') return Ge(q, Y, tu(X), P);
         if (X.$$typeof === w) return Ge(q, Y, Wi(q, X), P);
@@ -3934,12 +3934,12 @@ Error generating stack: ` +
                 { lane: 0, tag: C.tag, payload: C.payload, callback: null, next: null }));
           e: {
             var re = e,
-              me = C;
+              he = C;
             Z = t;
             var Ge = n;
-            switch (me.tag) {
+            switch (he.tag) {
               case 1:
-                if (((re = me.payload), typeof re == 'function')) {
+                if (((re = he.payload), typeof re == 'function')) {
                   I = re.call(Ge, I, Z);
                   break e;
                 }
@@ -3949,7 +3949,7 @@ Error generating stack: ` +
                 re.flags = (re.flags & -65537) | 128;
               case 0:
                 if (
-                  ((re = me.payload),
+                  ((re = he.payload),
                   (Z = typeof re == 'function' ? re.call(Ge, I, Z) : re),
                   Z == null)
                 )
@@ -6995,8 +6995,8 @@ Error generating stack: ` +
                   var re = Hl(n.type, a);
                   ((e = l.getSnapshotBeforeUpdate(re, u)),
                     (l.__reactInternalSnapshotBeforeUpdate = e));
-                } catch (me) {
-                  Ue(n, n.return, me);
+                } catch (he) {
+                  Ue(n, n.return, he);
                 }
               }
               break;
@@ -8035,7 +8035,7 @@ Error generating stack: ` +
   }
   function Ud(e, t, n) {
     if ((Ne & 6) !== 0) throw Error(x(327));
-    var l = (!n && (t & 127) === 0 && (t & e.expiredLanes) === 0) || he(e, t),
+    var l = (!n && (t & 127) === 0 && (t & e.expiredLanes) === 0) || me(e, t),
       a = l ? bg(e, t) : Qs(e, t, !0),
       u = l;
     do {
@@ -8199,7 +8199,7 @@ Error generating stack: ` +
       (Be = 0),
       (Gt = null),
       (rl = !1),
-      (pa = he(e, t)),
+      (pa = me(e, t)),
       (Ls = !1),
       (Sa = Yt = js = jl = sl = $e = 0),
       (wt = fi = null),
@@ -8308,7 +8308,7 @@ Error generating stack: ` +
     Ne |= 2;
     var l = Gd(),
       a = Yd();
-    Ye !== e || Ae !== t ? ((Tu = null), (bu = ct() + 500), Ea(e, t)) : (pa = he(e, t));
+    Ye !== e || Ae !== t ? ((Tu = null), (bu = ct() + 500), Ea(e, t)) : (pa = me(e, t));
     e: do
       try {
         if (Be !== 0 && Me !== null) {
@@ -8540,10 +8540,10 @@ Error generating stack: ` +
                 if (Z.getSelection) {
                   var k = Z.getSelection(),
                     re = C.textContent.length,
-                    me = Math.min(U.start, re),
-                    Ge = U.end === void 0 ? me : Math.min(U.end, re);
-                  !k.extend && me > Ge && ((S = Ge), (Ge = me), (me = S));
-                  var q = _o(C, me),
+                    he = Math.min(U.start, re),
+                    Ge = U.end === void 0 ? he : Math.min(U.end, re);
+                  !k.extend && he > Ge && ((S = Ge), (Ge = he), (he = S));
+                  var q = _o(C, he),
                     Y = _o(C, Ge);
                   if (
                     q &&
@@ -8557,7 +8557,7 @@ Error generating stack: ` +
                     var X = I.createRange();
                     (X.setStart(q.node, q.offset),
                       k.removeAllRanges(),
-                      me > Ge
+                      he > Ge
                         ? (k.addRange(X), k.extend(Y.node, Y.offset))
                         : (X.setEnd(Y.node, Y.offset), k.addRange(X)));
                   }
@@ -8791,7 +8791,7 @@ Error generating stack: ` +
                 l === Ye ? u : 0,
                 l.cancelPendingCommit !== null || l.timeoutHandle !== -1
               )),
-              (u & 3) === 0 || he(l, u) || ((n = !0), tm(l, u)));
+              (u & 3) === 0 || me(l, u) || ((n = !0), tm(l, u)));
           l = l.next;
         }
       while (n);
@@ -8839,7 +8839,7 @@ Error generating stack: ` +
       n === 0 || (e === t && (Be === 2 || Be === 9)) || e.cancelPendingCommit !== null)
     )
       return (l !== null && l !== null && Tt(l), (e.callbackNode = null), (e.callbackPriority = 0));
-    if ((n & 3) === 0 || he(e, n)) {
+    if ((n & 3) === 0 || me(e, n)) {
       if (((t = n & -n), t === e.callbackPriority)) return t;
       switch ((l !== null && Tt(l), qt(n))) {
         case 2:
@@ -9194,10 +9194,10 @@ Error generating stack: ` +
             case 'beforetoggle':
               k = Uv;
           }
-          var me = (t & 4) !== 0,
-            Ge = !me && (e === 'scroll' || e === 'scrollend'),
-            q = me ? (Z !== null ? Z + 'Capture' : null) : Z;
-          me = [];
+          var he = (t & 4) !== 0,
+            Ge = !he && (e === 'scroll' || e === 'scrollend'),
+            q = he ? (Z !== null ? Z + 'Capture' : null) : Z;
+          he = [];
           for (var Y = Q, X; Y !== null; ) {
             var P = Y;
             if (
@@ -9206,13 +9206,13 @@ Error generating stack: ` +
               (P !== 5 && P !== 26 && P !== 27) ||
                 X === null ||
                 q === null ||
-                ((P = Ha(Y, q)), P != null && me.push(vi(Y, P, X))),
+                ((P = Ha(Y, q)), P != null && he.push(vi(Y, P, X))),
               Ge)
             )
               break;
             Y = Y.return;
           }
-          0 < me.length && ((Z = new k(Z, re, null, n, W)), I.push({ event: Z, listeners: me }));
+          0 < he.length && ((Z = new k(Z, re, null, n, W)), I.push({ event: Z, listeners: he }));
         }
       }
       if ((t & 7) === 0) {
@@ -9236,50 +9236,50 @@ Error generating stack: ` +
                 (k = Q),
                 (re = re ? Zl(re) : null),
                 re !== null &&
-                  ((Ge = i(re)), (me = re.tag), re !== Ge || (me !== 5 && me !== 27 && me !== 6)) &&
+                  ((Ge = i(re)), (he = re.tag), re !== Ge || (he !== 5 && he !== 27 && he !== 6)) &&
                   (re = null))
               : ((k = null), (re = Q)),
             k !== re)
           ) {
             if (
-              ((me = fo),
+              ((he = fo),
               (P = 'onMouseLeave'),
               (q = 'onMouseEnter'),
               (Y = 'mouse'),
               (e === 'pointerout' || e === 'pointerover') &&
-                ((me = ho), (P = 'onPointerLeave'), (q = 'onPointerEnter'), (Y = 'pointer')),
+                ((he = ho), (P = 'onPointerLeave'), (q = 'onPointerEnter'), (Y = 'pointer')),
               (Ge = k == null ? Z : Ua(k)),
               (X = re == null ? Z : Ua(re)),
-              (Z = new me(P, Y + 'leave', k, n, W)),
+              (Z = new he(P, Y + 'leave', k, n, W)),
               (Z.target = Ge),
               (Z.relatedTarget = X),
               (P = null),
               Zl(W) === Q &&
-                ((me = new me(q, Y + 'enter', re, n, W)),
-                (me.target = X),
-                (me.relatedTarget = Ge),
-                (P = me)),
+                ((he = new he(q, Y + 'enter', re, n, W)),
+                (he.target = X),
+                (he.relatedTarget = Ge),
+                (P = he)),
               (Ge = P),
               k && re)
             )
               t: {
-                for (me = Bg, q = k, Y = re, X = 0, P = q; P; P = me(P)) X++;
+                for (he = Bg, q = k, Y = re, X = 0, P = q; P; P = he(P)) X++;
                 P = 0;
-                for (var fe = Y; fe; fe = me(fe)) P++;
-                for (; 0 < X - P; ) ((q = me(q)), X--);
-                for (; 0 < P - X; ) ((Y = me(Y)), P--);
+                for (var fe = Y; fe; fe = he(fe)) P++;
+                for (; 0 < X - P; ) ((q = he(q)), X--);
+                for (; 0 < P - X; ) ((Y = he(Y)), P--);
                 for (; X--; ) {
                   if (q === Y || (Y !== null && q === Y.alternate)) {
-                    me = q;
+                    he = q;
                     break t;
                   }
-                  ((q = me(q)), (Y = me(Y)));
+                  ((q = he(q)), (Y = he(Y)));
                 }
-                me = null;
+                he = null;
               }
-            else me = null;
-            (k !== null && um(I, Z, k, me, !1),
-              re !== null && Ge !== null && um(I, Ge, re, me, !0));
+            else he = null;
+            (k !== null && um(I, Z, k, he, !1),
+              re !== null && Ge !== null && um(I, Ge, re, he, !0));
           }
         }
         e: {
@@ -10040,9 +10040,9 @@ Error generating stack: ` +
       case 'track':
       case 'wbr':
       case 'menuitem':
-        for (var me in n)
-          ((Z = n[me]),
-            n.hasOwnProperty(me) && Z != null && !l.hasOwnProperty(me) && je(e, t, me, null, l, Z));
+        for (var he in n)
+          ((Z = n[he]),
+            n.hasOwnProperty(he) && Z != null && !l.hasOwnProperty(he) && je(e, t, he, null, l, Z));
         for (Q in l)
           if (((Z = l[Q]), (k = n[Q]), l.hasOwnProperty(Q) && Z !== k && (Z != null || k != null)))
             switch (Q) {
@@ -13575,11 +13575,11 @@ const rp = '_banner_1qruq_1',
   Sp = '_canvas_layer_6wr97_11',
   xp = '_game_over_line_6wr97_22',
   _c = { surface: pp, canvas_layer: Sp, game_over_line: xp },
-  Ep = '_layer_z1h0v_1',
-  bp = '_effect_z1h0v_7',
-  Tp = '_ring_z1h0v_12',
-  Mp = '_score_z1h0v_24',
-  Cp = '_special_z1h0v_36',
+  Ep = '_layer_1dvsy_1',
+  bp = '_effect_1dvsy_7',
+  Tp = '_ring_1dvsy_12',
+  Mp = '_score_1dvsy_24',
+  Cp = '_special_1dvsy_36',
   Ri = { layer: Ep, effect: bp, ring: Tp, score: Mp, special: Cp },
   jh = N.memo(
     N.forwardRef((s, b) => {
@@ -14023,7 +14023,7 @@ const Kh = N.memo(
               }),
               $.jsx('footer', {
                 className: rn.footer,
-                children: $.jsxs('span', { className: rn.version, children: ['v', '1.0.20'] }),
+                children: $.jsxs('span', { className: rn.version, children: ['v', '1.0.21'] }),
               }),
             ],
           }),
@@ -19320,14 +19320,21 @@ const oS = 3,
     s.render.sprite = { texture: tv(b.svgPath), xScale: T, yScale: T, xOffset: 0.5, yOffset: 0.5 };
   },
   gh = new Set(),
-  yh = (s) => {
-    for (let b = 1; b <= Vl; b += 1) {
-      const T = _a(b, 1, s),
-        x = tv(T.svgPath);
-      if (gh.has(x)) continue;
-      gh.add(x);
-      const h = new Image();
-      h.src = x;
+  yh = async (s, b) => {
+    for (let T = 1; T <= Vl; T += 1) {
+      const x = _a(T, 1, s),
+        h = tv(x.svgPath);
+      if (!gh.has(h)) {
+        gh.add(h);
+        try {
+          const d = await (await fetch(h)).blob(),
+            f = await createImageBitmap(d);
+          b && (b.textures[h] = f);
+        } catch {
+          const i = new Image();
+          i.src = h;
+        }
+      }
     }
   },
   wS = ({ fieldWidth: s, fieldHeight: b }) => {
@@ -19420,7 +19427,7 @@ const oS = 3,
       const xe = M.current,
         Re = _.current,
         pe = we.Engine.create({ gravity: { x: 0, y: xn.gravityY } }),
-        he = we.Render.create({
+        me = we.Render.create({
           element: ue,
           engine: pe,
           options: {
@@ -19436,25 +19443,25 @@ const oS = 3,
         ht.render.visible = !1;
       }),
         we.World.add(pe.world, [Te, He, Pe, Qe]),
-        we.Render.run(he));
+        we.Render.run(me));
       const Ke = we.Runner.create();
-      (we.Runner.run(Ke, pe), (x.current = pe), (h.current = he), (i.current = Ke));
-      for (const ht of Jc) yh(ht.id);
+      (we.Runner.run(Ke, pe), (x.current = pe), (h.current = me), (i.current = Ke));
+      for (const ht of Jc) yh(ht.id, me);
       const tt = () => {
         document.hidden
-          ? (we.Runner.stop(Ke), we.Render.stop(he))
-          : (we.Render.run(he), we.Runner.run(Ke, pe));
+          ? (we.Runner.stop(Ke), we.Render.stop(me))
+          : (we.Render.run(me), we.Runner.run(Ke, pe));
       };
       document.addEventListener('visibilitychange', tt);
       const ft = st.current;
       return () => {
         (document.removeEventListener('visibilitychange', tt),
           we.Runner.stop(Ke),
-          we.Render.stop(he),
+          we.Render.stop(me),
           we.World.clear(pe.world, !1),
           we.Engine.clear(pe),
-          he.canvas.parentNode && he.canvas.parentNode.removeChild(he.canvas),
-          (he.textures = {}),
+          me.canvas.parentNode && me.canvas.parentNode.removeChild(me.canvas),
+          (me.textures = {}),
           (x.current = null),
           (h.current = null),
           (i.current = null),
@@ -19466,9 +19473,9 @@ const oS = 3,
       const Re = x.current;
       if (!Re) return;
       const pe = xl(ue),
-        he = xl(xe);
-      if (!pe || !he || pe.consumed || he.consumed || pe.level !== he.level) return;
-      ((pe.consumed = !0), (he.consumed = !0));
+        me = xl(xe);
+      if (!pe || !me || pe.consumed || me.consumed || pe.level !== me.level) return;
+      ((pe.consumed = !0), (me.consumed = !0));
       const Te = pe.level + 1,
         He = OS(ue, xe);
       (we.World.remove(Re.world, [ue, xe]), st.current.delete(ue), st.current.delete(xe));
@@ -19513,7 +19520,7 @@ const oS = 3,
         const pe = () => {
             ((Rt.current = null), Tt.current !== null && ((Tt.current = null), nn(null)));
           },
-          he = () => {
+          me = () => {
             if (We.current !== null)
               if (performance.now() >= We.current) Fn.current();
               else {
@@ -19575,19 +19582,19 @@ const oS = 3,
             Ke !== Tt.current && ((Tt.current = Ke), nn(Ke));
           };
         return (
-          we.Events.on(ue, 'afterUpdate', he),
+          we.Events.on(ue, 'afterUpdate', me),
           () => {
-            we.Events.off(ue, 'afterUpdate', he);
+            we.Events.off(ue, 'afterUpdate', me);
           }
         );
       }, []),
       N.useEffect(() => {
         if (x.current) {
-          yh(O);
+          yh(O, h.current);
           for (const pe of st.current) {
-            const he = xl(pe);
-            if (!he || he.consumed) continue;
-            const Te = _a(he.level, M.current, O);
+            const me = xl(pe);
+            if (!me || me.consumed) continue;
+            const Te = _a(me.level, M.current, O);
             wc(pe, Te);
           }
         }
@@ -19611,14 +19618,14 @@ const oS = 3,
         if (!x.current) return;
         Ee.current = 'shake';
         const { impulseMin: xe, impulseMax: Re, upwardBias: pe } = rt.shake;
-        for (const he of st.current) {
-          const Te = xl(he);
+        for (const me of st.current) {
+          const Te = xl(me);
           if (!Te || Te.consumed) continue;
           const He = Math.random() * Math.PI * 2,
             Pe = xe + Math.random() * (Re - xe),
-            Qe = Math.cos(He) * Pe * he.mass,
-            Ke = (Math.sin(He) * Pe - pe) * he.mass;
-          we.Body.applyForce(he, he.position, { x: Qe, y: Ke });
+            Qe = Math.cos(He) * Pe * me.mass,
+            Ke = (Math.sin(He) * Pe - pe) * me.mass;
+          we.Body.applyForce(me, me.position, { x: Qe, y: Ke });
         }
         (J.current('special'), (Ee.current = null));
       }, []),
@@ -19630,16 +19637,16 @@ const oS = 3,
         ue.gravity.y = xe * rt.gravityFlip.multiplier;
         const Re = new Map(),
           pe = new Map();
-        for (const he of st.current)
-          (Re.set(he, he.frictionAir),
-            pe.set(he, he.restitution),
-            (he.frictionAir = rt.gravityFlip.frictionAir),
-            we.Body.setVelocity(he, { x: he.velocity.x, y: rt.gravityFlip.liftKickVelocity }));
+        for (const me of st.current)
+          (Re.set(me, me.frictionAir),
+            pe.set(me, me.restitution),
+            (me.frictionAir = rt.gravityFlip.frictionAir),
+            we.Body.setVelocity(me, { x: me.velocity.x, y: rt.gravityFlip.liftKickVelocity }));
         (ve(!0),
           J.current('special'),
           (Xe.current = window.setTimeout(() => {
-            const he = x.current;
-            he && (he.gravity.y = xe * rt.gravityFlip.slamGravityMultiplier);
+            const me = x.current;
+            me && (me.gravity.y = xe * rt.gravityFlip.slamGravityMultiplier);
             for (const Te of st.current)
               ((Te.frictionAir = rt.gravityFlip.slamFrictionAir),
                 pe.has(Te) || pe.set(Te, Te.restitution),
@@ -19670,17 +19677,17 @@ const oS = 3,
           const Re = Array.from(st.current),
             pe = we.Query.point(Re, { x: ue, y: xe });
           if (pe.length === 0) return;
-          const he = pe[0],
-            Te = xl(he);
+          const me = pe[0],
+            Te = xl(me);
           if (!Te) return;
           const He = Re.filter((Qe) => {
-            if (Qe === he) return !1;
+            if (Qe === me) return !1;
             const Ke = xl(Qe);
             return !!Ke && !Ke.consumed && Ke.level === Te.level;
           });
           if (He.length === 0) return;
           const Pe = He[Math.floor(Math.random() * He.length)];
-          (Bt(he),
+          (Bt(me),
             Bt(Pe),
             (ke.current = Te.level),
             (We.current = performance.now() + rt.magnet.durationMs),
@@ -19731,11 +19738,11 @@ const oS = 3,
           if (!Re) return;
           const pe = performance.now();
           if (pe - D.current < cn.dropCooldownMs) return;
-          const he = Math.max(0, Math.min(1, ue)),
+          const me = Math.max(0, Math.min(1, ue)),
             Te = Re.radius + xn.wallThickness / 2,
             He = Te,
             Pe = M.current - Te,
-            Qe = He + he * (Pe - He),
+            Qe = He + me * (Pe - He),
             Ke = Re.radius + 4,
             tt = hh(Re, Qe, Ke, pe);
           (wc(tt, Re),

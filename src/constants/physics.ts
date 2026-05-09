@@ -5,7 +5,11 @@ export const PHYSICS = {
   // フィールドサイズ（実際の描画では viewport に合わせてスケールする）
   fieldWidth: 360,
   fieldHeight: 560,
-  wallThickness: 20,
+  // 壁の厚さ。すべての壁は内向きの面がフィールド端 (x=0/x=width/y=0/y=height) に
+  // なる位置に配置されるので、厚さを増やしても視覚・衝突面の位置は変わらない（外側に広がるだけ）。
+  // 値が大きいほど Matter の離散衝突判定でアイテムが高速に貫通する事故 (tunneling) を防げる。
+  // 重力反転の叩きつけフェーズで velocity が 100/tick 程度まで上がるため、150 確保している。
+  wallThickness: 150,
   // ゲームオーバーラインはフィールド上端から下方向のオフセット
   gameOverLineOffset: 80,
   // 静止判定のしきい値（|vy| がこれ未満で「ほぼ止まっている」とみなす）

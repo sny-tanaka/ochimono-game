@@ -784,7 +784,10 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       if (now - lastDropAtRef.current < GAME.dropCooldownMs) return;
 
       const clamped = Math.max(0, Math.min(1, xRatio));
-      const margin = current.radius + PHYSICS.wallThickness / 2;
+      // 壁の内向き面はフィールド端 (x=0 / x=width) なので margin はアイテム半径だけで十分。
+      // 旧実装は wallThickness/2 を足していたが、壁はフィールド外に伸びている形なので
+      // この補正は不要で、ドロップ可能範囲を不必要に狭めていた。
+      const margin = current.radius;
       const xMin = margin;
       const xMax = fieldWidthRef.current - margin;
       const x = xMin + clamped * (xMax - xMin);

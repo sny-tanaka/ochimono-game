@@ -19,9 +19,9 @@ if (!self.define) {
     const l = e || ('document' in self ? document.currentScript.src : '') || location.href;
     if (i[l]) return;
     let a = {};
-    const f = (e) => s(e, l),
-      d = { module: { uri: l }, exports: a, require: f };
-    i[l] = Promise.all(n.map((e) => d[e] || f(e))).then((e) => (r(...e), a));
+    const d = (e) => s(e, l),
+      f = { module: { uri: l }, exports: a, require: d };
+    i[l] = Promise.all(n.map((e) => f[e] || d(e))).then((e) => (r(...e), a));
   };
 }
 define(['./workbox-1ef09536'], function (e) {
@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '856b0b7b82331ab8d90fbff0e4ad6183' },
+        { url: 'index.html', revision: '285dd4ebf0b1b4677b02dbf00cb29374' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'sounds/punyu.mp3', revision: 'a36dc54f82e9199637f75dad46b2d7c9' },
@@ -46,7 +46,7 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'images/gumi/level02.png', revision: '27de8023b13180567a123b5f3278d6ae' },
         { url: 'images/gumi/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
         { url: 'assets/workbox-window.prod.es5-BIl4cyR9.js', revision: null },
-        { url: 'assets/index-CGsgk7Qn.js', revision: null },
+        { url: 'assets/index-QgEIk6v5.js', revision: null },
         { url: 'assets/index-BsbOvodx.css', revision: null },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },

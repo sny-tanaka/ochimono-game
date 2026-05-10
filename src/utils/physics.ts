@@ -2,6 +2,7 @@ import Matter from 'matter-js';
 
 import { COLLISION_CATEGORY, ITEM_COLLISION_MASK, PHYSICS } from '@/constants/physics';
 import type { ItemDefinition } from '@/types/item';
+import type { Vec2 } from '@/utils/contour';
 
 // Matter.js の Body に紐付けるカスタムデータ
 export type ItemBodyData = {
@@ -18,29 +19,69 @@ type BodyWithItemPlugin = Matter.Body & {
   plugin: { itemData?: ItemBodyData };
 };
 
-export const createItemBody = (
+// 共通のボディオプションを生成する。
+const itemBodyOptions = (item: ItemDefinition): Matter.IBodyDefinition => ({
+  restitution: item.restitution,
+  friction: item.friction,
+  density: item.density,
+  label: `item-${item.level}`,
+  collisionFilter: {
+    category: COLLISION_CATEGORY.item,
+    mask: ITEM_COLLISION_MASK,
+  },
+});
+
+// 自前で sprite を描画するため、Matter.Render が body / parts を自動描画しないよう全 part を不可視化。
+const hideAllParts = (body: Matter.Body): void => {
+  for (const part of body.parts) {
+    part.render.visible = false;
+  }
+};
+
+const attachItemData = (body: Matter.Body, level: number, droppedAt: number): void => {
+  (body as BodyWithItemPlugin).plugin.itemData = {
+    level,
+    consumed: false,
+    droppedAt,
+  };
+};
+
+// 真円当たり判定の body を作る（フォールバック / 輪郭抽出未完了時用）。
+export const createCircleItemBody = (
   item: ItemDefinition,
   x: number,
   y: number,
   droppedAt: number
 ): Matter.Body => {
-  const body = Matter.Bodies.circle(x, y, item.radius, {
-    restitution: item.restitution,
-    friction: item.friction,
-    density: item.density,
-    label: `item-${item.level}`,
-    collisionFilter: {
-      category: COLLISION_CATEGORY.item,
-      mask: ITEM_COLLISION_MASK,
-    },
-  });
-  (body as BodyWithItemPlugin).plugin.itemData = {
-    level: item.level,
-    consumed: false,
-    droppedAt,
-  };
+  const body = Matter.Bodies.circle(x, y, item.radius, itemBodyOptions(item));
+  attachItemData(body, item.level, droppedAt);
+  hideAllParts(body);
   return body;
 };
+
+// 多角形（PNG 輪郭由来の頂点）から body を作る。凹形状は poly-decomp で分解される前提。
+// 失敗時は null を返す（呼び出し側で circle にフォールバック）。
+export const createPolygonItemBody = (
+  item: ItemDefinition,
+  x: number,
+  y: number,
+  droppedAt: number,
+  vertices: Vec2[]
+): Matter.Body | null => {
+  if (vertices.length < 3) return null;
+  // Matter.Bodies.fromVertices は 3 番目の引数に「複数の vertex set 配列」を取る。
+  // 1 つしか無い時は単一要素配列にして渡す。
+  const body = Matter.Bodies.fromVertices(x, y, [vertices], itemBodyOptions(item));
+  // poly-decomp が無い / decomp 失敗で convex hull に落ちる場合もあるが、生成自体は成功する。
+  // body が undefined を返してくる可能性は低いが念のため。
+  if (!body) return null;
+  attachItemData(body, item.level, droppedAt);
+  hideAllParts(body);
+  return body;
+};
+
+/** @deprecated Use createCircleItemBody / createPolygonItemBody. Kept for backward compat. */
+export const createItemBody = createCircleItemBody;
 
 export const getItemDataFromBody = (body: Matter.Body): ItemBodyData | undefined =>
   (body as BodyWithItemPlugin).plugin.itemData;

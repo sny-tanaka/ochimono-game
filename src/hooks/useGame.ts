@@ -1,4 +1,5 @@
 import Matter from 'matter-js';
+import * as polyDecomp from 'poly-decomp';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { MergeEffectHandle } from '@/components/Effects/MergeEffect/MergeEffect';
@@ -21,10 +22,25 @@ import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
 import type { GameStatus, SuspendedGame } from '@/types/game';
 import type { ItemDefinition } from '@/types/item';
-import { createItemBody, createWalls, getItemDataFromBody, midpoint } from '@/utils/physics';
+import {
+  createCircleItemBody,
+  createPolygonItemBody,
+  createWalls,
+  getItemDataFromBody,
+  midpoint,
+} from '@/utils/physics';
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
 import { loadThemeId, saveThemeId } from '@/utils/storage';
 import { clearSuspendedGame, loadSuspendedGame, saveSuspendedGame } from '@/utils/suspendStorage';
+import {
+  contourToBodyVertices,
+  extractContourForTexture,
+  getCachedContour,
+} from '@/utils/textureContour';
+
+// Matter.Bodies.fromVertices が凹形状を扱えるよう、poly-decomp を Matter に登録する。
+// Common.setDecomp はモジュール全体に対する 1 回だけのセットアップなので、ここで一度行う。
+Matter.Common.setDecomp(polyDecomp);
 
 // `yarn debug` で起動された時のみ true。
 // 通常モードでは Lv1〜MAX_DROPPABLE_LEVEL からランダム抽選するが、デバッグモードでは
@@ -46,19 +62,52 @@ const resolveTextureUrlCached = (svgPath: string): string => {
   return resolved;
 };
 
+// body.render に乗せる sprite + 「PNG 中心と body 重心のズレを補正するための world 単位オフセット」。
+// Matter.Render は使わず自前で描画するので、Matter の sprite.xOffset/yOffset 慣習には依存しない。
+type ItemRenderConfig = {
+  textureUrl: string;
+  scale: number;
+  // body.position（= 多角形の重心）から PNG の幾何中心への、body-local 座標オフセット（physics 単位）。
+  // 自前 renderer で sprite を描く時に translate(body.position) → rotate → translate(this) → drawImage する。
+  contourOffsetX: number;
+  contourOffsetY: number;
+};
+type BodyWithRenderConfig = Matter.Body & {
+  plugin: { itemData?: import('@/utils/physics').ItemBodyData; itemRender?: ItemRenderConfig };
+};
+
 const applySprite = (body: Matter.Body, item: ItemDefinition) => {
-  // PNG のナチュラルサイズに対して直径 (radius * 2) になるよう拡大率を決める
   const scale = (item.radius * 2) / ITEM_SPRITE_NATURAL_SIZE;
-  // xOffset/yOffset を 0.5 にしないと Matter.Render の drawImage が NaN になる
-  // （body.render.sprite を後から代入する形式だと既定値が引き継がれない）。
-  // @types/matter-js には xOffset/yOffset が無いためキャストで回避。
-  body.render.sprite = {
-    texture: resolveTextureUrlCached(item.svgPath),
-    xScale: scale,
-    yScale: scale,
-    xOffset: 0.5,
-    yOffset: 0.5,
-  } as Matter.IBodyRenderOptionsSprite;
+  const url = resolveTextureUrlCached(item.svgPath);
+  // 輪郭が抽出済みなら、PNG 中心と body 重心のズレを physics 単位に換算して保持する。
+  // 抽出未完了 / 抽出失敗の場合は 0（= circle body 用に sprite を body.position 中心に描けばよい）。
+  const contour = getCachedContour(url);
+  const contourOffsetX = contour ? -contour.centroidOffset.x * scale : 0;
+  const contourOffsetY = contour ? -contour.centroidOffset.y * scale : 0;
+  (body as BodyWithRenderConfig).plugin.itemRender = {
+    textureUrl: url,
+    scale,
+    contourOffsetX,
+    contourOffsetY,
+  };
+};
+
+// 輪郭キャッシュがあれば多角形 body、無ければ円 body を作るヘルパ。
+// applySprite まで含めて呼ぶと「sprite + collision shape」がワンセットで一貫する。
+const buildItemBody = (
+  item: ItemDefinition,
+  x: number,
+  y: number,
+  droppedAt: number
+): Matter.Body => {
+  const url = resolveTextureUrlCached(item.svgPath);
+  const contour = getCachedContour(url);
+  if (contour) {
+    const verts = contourToBodyVertices(contour, item.radius);
+    const polygon = createPolygonItemBody(item, x, y, droppedAt, verts);
+    if (polygon) return polygon;
+  }
+  return createCircleItemBody(item, x, y, droppedAt);
 };
 
 // 全テーマ × 全レベルの PNG を先読みする。
@@ -84,16 +133,16 @@ const preloadTexturesForTheme = async (
       // ブラウザ実装によっては Worker / 別スレッドで decode されるため、
       // メインスレッドが大きい PNG のデコードでブロックされない。
       const bitmap = await createImageBitmap(blob);
-      // Matter.Render の textures キャッシュに直接登録。
-      // `_getTexture` は登録済みオブジェクトをそのまま返し、`drawImage` は
-      // `ImageBitmap` も `HTMLImageElement` も同様に受け付ける。
-      // 型定義 (@types/matter-js) に textures は含まれていないため as でキャスト。
+      // Matter.Render の textures キャッシュに直接登録（自前 renderer もここから読む）。
       if (render) {
         (render as unknown as { textures: Record<string, ImageBitmap> }).textures[url] = bitmap;
       }
+      // 不透明領域の外形多角形を抽出してキャッシュ。次回の body 生成で使う。
+      // 失敗 (alpha 全部空 / 全部塗りなど) しても circle にフォールバックするので非致命。
+      void extractContourForTexture(url, bitmap);
     } catch {
       // createImageBitmap 不可 / fetch 失敗時のフォールバック: 従来の Image 方式。
-      // ブラウザに勝手にロード・decode させて Matter._getTexture 任せにする。
+      // 輪郭抽出はスキップ（circle にフォールバック）。
       const img = new Image();
       img.src = url;
     }
@@ -338,6 +387,36 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     });
     Matter.World.add(engine.world, [ground, leftWall, rightWall, ceiling]);
 
+    // 自前 sprite 描画。各アイテム body は render.visible=false で Matter からは描画されないので、
+    // ここで afterRender イベントに乗っかって canvas に直接 drawImage する。
+    // 多角形 body の場合は body.position が重心位置なので、PNG 中心へのオフセットを補正する。
+    const itemBodies = itemBodiesRef.current;
+    const onAfterRender = () => {
+      const ctx = render.context;
+      const textures = (render as unknown as { textures: Record<string, CanvasImageSource> })
+        .textures;
+      for (const body of itemBodies) {
+        const cfg = (body as BodyWithRenderConfig).plugin.itemRender;
+        if (!cfg) continue;
+        const tex = textures[cfg.textureUrl];
+        if (!tex) continue;
+        // ImageBitmap / HTMLImageElement / OffscreenCanvas いずれも width/height を持つ
+        const tw = (tex as { width: number }).width;
+        const th = (tex as { height: number }).height;
+        const drawW = tw * cfg.scale;
+        const drawH = th * cfg.scale;
+
+        ctx.save();
+        ctx.translate(body.position.x, body.position.y);
+        ctx.rotate(body.angle);
+        // body 重心 → PNG 幾何中心 へオフセット（body-local）。circle body は 0。
+        ctx.translate(cfg.contourOffsetX, cfg.contourOffsetY);
+        ctx.drawImage(tex, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+      }
+    };
+    Matter.Events.on(render, 'afterRender', onAfterRender);
+
     Matter.Render.run(render);
     const runner = Matter.Runner.create();
     Matter.Runner.run(runner, engine);
@@ -364,13 +443,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     };
     document.addEventListener('visibilitychange', onVisibility);
 
-    // cleanup 内で ref.current を直接参照すると react-hooks/exhaustive-deps の警告が出る。
-    // この Set は engine と同じライフサイクルで管理する純内部状態なので、
-    // ローカル変数経由で参照することで警告を回避する。
-    const itemBodies = itemBodiesRef.current;
-
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
+      Matter.Events.off(render, 'afterRender', onAfterRender);
       Matter.Runner.stop(runner);
       Matter.Render.stop(render);
       Matter.World.clear(engine.world, false);
@@ -419,7 +494,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       playSoundRef.current('special');
     } else {
       const mergedItem = itemForFieldWidth(mergedLevel, fieldWidthRef.current, themeIdRef.current);
-      const newBody = createItemBody(mergedItem, center.x, center.y, performance.now());
+      const newBody = buildItemBody(mergedItem, center.x, center.y, performance.now());
       applySprite(newBody, mergedItem);
       Matter.World.add(engine.world, newBody);
       itemBodiesRef.current.add(newBody);
@@ -537,7 +612,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         if (!data || data.consumed) continue;
         if (now - data.droppedAt < PHYSICS.gameOverGracePeriodMs) continue;
         if (Math.abs(body.velocity.y) > PHYSICS.restingVelocityThreshold) continue;
-        if (body.position.y - body.circleRadius! < gameOverLineY) {
+        // 多角形 body は circleRadius を持たないので bounds で判定する。
+        // bounds.min.y は body の最上端 (= 旧 position.y - circleRadius と同義)。
+        if (body.bounds.min.y < gameOverLineY) {
           isDanger = true;
           break;
         }
@@ -820,7 +897,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       const x = xMin + clamped * (xMax - xMin);
       const y = current.radius + 4;
 
-      const body = createItemBody(current, x, y, now);
+      const body = buildItemBody(current, x, y, now);
       applySprite(body, current);
       Matter.World.add(engine.world, body);
       itemBodiesRef.current.add(body);
@@ -969,7 +1046,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       for (const sb of data.bodies) {
         if (sb.level < 1 || sb.level > MAX_ITEM_LEVEL) continue;
         const item = itemForFieldWidth(sb.level, fieldWidthRef.current, data.themeId);
-        const body = createItemBody(item, sb.x, sb.y, now);
+        const body = buildItemBody(item, sb.x, sb.y, now);
         Matter.Body.setVelocity(body, { x: sb.vx, y: sb.vy });
         Matter.Body.setAngle(body, sb.angle);
         Matter.Body.setAngularVelocity(body, sb.angularVelocity);

@@ -2,12 +2,23 @@
 
 .line {
   position: absolute;
-  // top/left はインラインの transform で制御する。
-  // 旧実装の `left: ${x}px` と等価になるよう、原点を 0 にしておく。
   top: 0;
-  left: 0;
-  width: 0;
-  border-left: 1.5px dashed rgba(107, 79, 160, 0.45);
+  // 旧実装は width:0 + border-left:1.5px dashed だったが、iOS Safari では
+  // box-sizing:border-box（global で設定）と width:0 の組み合わせで border-only
+  // 要素が描画されない / 消える挙動が出ていた（line が出ない不具合）。
+  // 確実に描画させるため、width を持たせて background の repeating-linear-gradient
+  // で破線パターンを描く方式に変更。色・透明度は旧 border の見た目に合わせる。
+  width: 2px;
+  // translate3d(${x}, 0, 0) で element の左端が x になる。視覚的な中心も x に
+  // 合わせるため、element を 1px だけ左にオフセット → 2px 幅の中央が x。
+  left: -1px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(107, 79, 160, 0.45) 0,
+    rgba(107, 79, 160, 0.45) 6px,
+    transparent 6px,
+    transparent 12px
+  );
   pointer-events: none;
   // pointermove ごとの transform 更新をコンポジタレイヤに乗せる。
   will-change: transform;

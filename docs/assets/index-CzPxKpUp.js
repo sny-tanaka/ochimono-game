@@ -13630,9 +13630,9 @@ const Ap = '_banner_1qruq_1',
     })
   );
 nv.displayName = 'MergeEffect';
-const Kp = '_line_yymkz_1',
-  kp = '_preview_wrap_yymkz_11',
-  Jp = '_preview_yymkz_11',
+const Kp = '_line_1p32x_1',
+  kp = '_preview_wrap_1p32x_11',
+  Jp = '_preview_1p32x_11',
   Yo = { line: Kp, preview_wrap: kp, preview: Jp },
   Fp = (s) => `/ochimono-game/${s}`.replace(/\/{2,}/g, '/'),
   av = H.memo(
@@ -14104,7 +14104,7 @@ const cv = H.memo(
                 : null,
               I.jsx('footer', {
                 className: on.footer,
-                children: I.jsxs('span', { className: on.version, children: ['v', '1.0.33'] }),
+                children: I.jsxs('span', { className: on.version, children: ['v', '1.0.34'] }),
               }),
             ],
           }),

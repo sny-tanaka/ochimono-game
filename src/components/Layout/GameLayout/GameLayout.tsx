@@ -104,6 +104,8 @@ const GameContent = ({ size }: { size: Size }) => {
         onSelect={game.selectSkill}
         onClose={game.closeSkillMenu}
         canUse={game.canUseSkill}
+        magnetUsesLeft={game.magnetUsesLeft}
+        magnetMaxUses={game.magnetMaxUses}
       />
       <SettingsDrawer
         open={isSettingsOpen}

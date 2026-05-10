@@ -31,6 +31,8 @@ vi.mock('@/hooks/useGame', () => ({
     skillSegmentCount: 3,
     canOpenSkillMenu: false,
     canUseSkill: { shake: false, gravityFlip: false, magnet: false },
+    magnetUsesLeft: 3,
+    magnetMaxUses: 3,
     isSkillMenuOpen: false,
     openSkillMenu: () => {},
     closeSkillMenu: () => {},

@@ -16,7 +16,13 @@ import {
   MAGNET_TARGET_COLLISION_MASK,
   PHYSICS,
 } from '@/constants/physics';
-import { gaugeGainForMerge, SKILL, skillCostPoints, type SkillKind } from '@/constants/skill';
+import {
+  gaugeGainForMerge,
+  MAGNET_MAX_USES_PER_GAME,
+  SKILL,
+  skillCostPoints,
+  type SkillKind,
+} from '@/constants/skill';
 import { THEMES, type ThemeId } from '@/constants/themes';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
@@ -177,8 +183,11 @@ export type UseGameResult = {
   skillSegmentCount: number;
   // メニューを開ける状態（最低 1 セグメント以上）
   canOpenSkillMenu: boolean;
-  // 各必殺技ごとの発動可否（コスト充足）
+  // 各必殺技ごとの発動可否（コスト充足 + マグネットは残り使用回数 > 0）
   canUseSkill: Record<SkillKind, boolean>;
+  // マグネットの 1 ゲーム内残り使用回数。0 になると以降グレーアウト。
+  magnetUsesLeft: number;
+  magnetMaxUses: number;
   // 必殺技選択メニューの表示状態
   isSkillMenuOpen: boolean;
   openSkillMenu: () => void;
@@ -285,6 +294,15 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   const [isMagnetSelecting, setIsMagnetSelecting] = useState(false);
   const isMagnetSelectingRef = useRef(false);
   const [isGravityFlipped, setIsGravityFlipped] = useState(false);
+  // マグネット必殺技の 1 ゲーム内残り使用回数。
+  // 0 になると以降グレーアウト（canUseSkill.magnet が false）。
+  // start / restart / resume でリセット / 復元される。
+  const [magnetUsesLeft, setMagnetUsesLeft] = useState(MAGNET_MAX_USES_PER_GAME);
+  const magnetUsesLeftRef = useRef(MAGNET_MAX_USES_PER_GAME);
+  const setMagnetUsesLeftBoth = useCallback((next: number) => {
+    magnetUsesLeftRef.current = next;
+    setMagnetUsesLeft(next);
+  }, []);
   // 反転中 + 叩きつけ中は天井に張り付いたアイテムでゲームオーバーラインが発火しないよう、
   // afterUpdate からも参照できる ref を別管理する。発動中は isDanger 判定を skip する。
   const gravitySkillActiveRef = useRef(false);
@@ -824,6 +842,8 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         return !!d && !d.consumed && d.level === data.level;
       });
       if (others.length === 0) return; // 同レベルが他にいない → 選択モード継続
+      // 残り使用回数チェック (ここで初めて消費するので、ここで弾く)
+      if (magnetUsesLeftRef.current <= 0) return;
       const partner = others[Math.floor(Math.random() * others.length)];
       // タップ対象 + パートナーの 2 体だけ MAGNET_TARGET カテゴリに切り替える。
       // 非対象アイテムを擦り抜けて飛べるようになる。発動終了時に必ず元に戻す。
@@ -831,11 +851,13 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       tagAsMagnetTarget(partner);
       magnetLevelRef.current = data.level;
       magnetEndAtRef.current = performance.now() + SKILL.magnet.durationMs;
+      // 1 ゲーム内の使用回数を 1 消費。
+      setMagnetUsesLeftBoth(magnetUsesLeftRef.current - 1);
       setIsMagnetSelectingBoth(false);
       playSoundRef.current('special');
       consumeGaugeBy(skillCostPoints('magnet'));
     },
-    [consumeGaugeBy, setIsMagnetSelectingBoth, tagAsMagnetTarget]
+    [consumeGaugeBy, setIsMagnetSelectingBoth, setMagnetUsesLeftBoth, tagAsMagnetTarget]
   );
 
   const openSkillMenu = useCallback(() => {
@@ -853,6 +875,8 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     (kind: SkillKind) => {
       const cost = skillCostPoints(kind);
       if (skillGaugeRef.current < cost) return;
+      // マグネットは 1 ゲーム内の使用回数上限もチェック。
+      if (kind === 'magnet' && magnetUsesLeftRef.current <= 0) return;
       setIsSkillMenuOpen(false);
       if (kind === 'shake') {
         activateShake();
@@ -861,7 +885,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         activateGravityFlip();
         consumeGaugeBy(cost);
       } else if (kind === 'magnet') {
-        // マグネットだけは対象選択完了時にゲージ消費する（キャンセル可能なため）
+        // マグネットだけは対象選択完了時にゲージ消費 / 使用回数消費する（キャンセル可能なため）
         activateMagnet();
       }
     },
@@ -945,13 +969,22 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     lastCountdownRef.current = null;
     setGameOverCountdown(null);
     debugSequenceRef.current = 1;
+    // マグネットの 1 ゲーム内使用回数を満タンに戻す。
+    setMagnetUsesLeftBoth(MAGNET_MAX_USES_PER_GAME);
     setCurrentItemSynced(pickRandomDroppable());
     setNextItemSynced(pickRandomDroppable());
     canDropRef.current = true;
     lastDropAtRef.current = 0;
     statusRef.current = 'playing';
     setStatus('playing');
-  }, [score, pickRandomDroppable, resetSkillState, setCurrentItemSynced, setNextItemSynced]);
+  }, [
+    score,
+    pickRandomDroppable,
+    resetSkillState,
+    setCurrentItemSynced,
+    setMagnetUsesLeftBoth,
+    setNextItemSynced,
+  ]);
 
   const restart = useCallback(() => {
     const engine = engineRef.current;
@@ -997,6 +1030,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       currentItemLevel: currentItemRef.current?.level ?? 1,
       nextItemLevel: nextItemRef.current?.level ?? 1,
       skillGauge: skillGaugeRef.current,
+      magnetUsesLeft: magnetUsesLeftRef.current,
       bodies,
     });
 
@@ -1086,6 +1120,13 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       const gauge = Math.max(0, Math.min(SKILL.gaugeMax, data.skillGauge));
       setSkillGaugeBoth(gauge);
 
+      // マグネット使用回数の復元。古い保存データに無い場合は満タンで開始（後方互換）。
+      const usesLeft = Math.max(
+        0,
+        Math.min(MAGNET_MAX_USES_PER_GAME, data.magnetUsesLeft ?? MAGNET_MAX_USES_PER_GAME)
+      );
+      setMagnetUsesLeftBoth(usesLeft);
+
       // スコア復元（既存スコアは reset → setRaw で書き換え）
       score.reset();
       score.setRaw(Math.max(0, data.score));
@@ -1095,7 +1136,14 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       statusRef.current = 'playing';
       setStatus('playing');
     },
-    [resetSkillState, score, setCurrentItemSynced, setNextItemSynced, setSkillGaugeBoth]
+    [
+      resetSkillState,
+      score,
+      setCurrentItemSynced,
+      setMagnetUsesLeftBoth,
+      setNextItemSynced,
+      setSkillGaugeBoth,
+    ]
   );
 
   const gameOverLineY = PHYSICS.gameOverLineOffset;
@@ -1127,8 +1175,11 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     canUseSkill: {
       shake: skillGauge >= skillCostPoints('shake'),
       gravityFlip: skillGauge >= skillCostPoints('gravityFlip'),
-      magnet: skillGauge >= skillCostPoints('magnet'),
+      // ゲージ + 残り使用回数の両方を満たすときだけ true。
+      magnet: skillGauge >= skillCostPoints('magnet') && magnetUsesLeft > 0,
     },
+    magnetUsesLeft,
+    magnetMaxUses: MAGNET_MAX_USES_PER_GAME,
     isSkillMenuOpen,
     openSkillMenu,
     closeSkillMenu,

@@ -59,12 +59,20 @@ export const gaugeGainForMerge = (mergedLevel: number): number => mergedLevel;
 export type SkillKind = 'shake' | 'gravityFlip' | 'magnet';
 
 // 各必殺技の発動コスト（セグメント単位）。
-// マグネットは 3 セグメント全てが必要（強力なので頻度を絞る）。
+// - shake: 1 ゲージ。手軽に使える救済。
+// - gravityFlip: 2 ゲージ。盤面を大きく動かせる強い技なので shake より重く。
+// - magnet: 3 ゲージ全部。最強の救済 + 加えて 1 ゲーム内の使用回数も MAGNET_MAX_USES_PER_GAME に制限。
 export const SKILL_COST_SEGMENTS: Record<SkillKind, number> = {
   shake: 1,
-  gravityFlip: 1,
+  gravityFlip: 2,
   magnet: SKILL_SEGMENT_COUNT,
 };
+
+// マグネット必殺技の 1 ゲーム内での最大使用回数。
+// マグネットはゲージさえ溜まれば Lv10 同士も合体・消滅できてしまい、
+// エンドレスゲーム化する原因になっていたため上限を設ける。
+// 上限に達したらゲージ満タンでもメニュー上で disabled になる。
+export const MAGNET_MAX_USES_PER_GAME = 3;
 
 // 各必殺技の発動コスト（ポイント単位）
 export const skillCostPoints = (kind: SkillKind): number =>

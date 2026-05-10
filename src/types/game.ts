@@ -40,5 +40,8 @@ export type SuspendedGame = {
   currentItemLevel: number;
   nextItemLevel: number;
   skillGauge: number;
+  // マグネットの 1 ゲーム内残り使用回数。古い保存データには無いので optional。
+  // 復元側で undefined のときは MAGNET_MAX_USES_PER_GAME（満タン）にフォールバック。
+  magnetUsesLeft?: number;
   bodies: SuspendedBody[];
 };

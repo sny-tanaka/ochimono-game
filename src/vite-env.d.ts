@@ -13,3 +13,15 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// poly-decomp の最小限の型。Matter.Common.setDecomp() に渡すだけなので
+// 必要メソッドだけ宣言する。
+declare module 'poly-decomp' {
+  type Vertex = [number, number];
+  export function quickDecomp(vertices: Vertex[]): Vertex[][];
+  export function decomp(vertices: Vertex[]): Vertex[][];
+  export function isSimple(vertices: Vertex[]): boolean;
+  export function makeCCW(vertices: Vertex[]): void;
+  export function removeCollinearPoints(vertices: Vertex[], thresholdAngle?: number): number;
+  export function removeDuplicatePoints(vertices: Vertex[], precision?: number): number;
+}

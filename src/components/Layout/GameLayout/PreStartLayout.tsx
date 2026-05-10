@@ -6,8 +6,8 @@ import { AppUpdater } from '@/components/AppUpdater/AppUpdater';
 import { ResumeDialog } from '@/components/Overlay/ResumeDialog/ResumeDialog';
 import { StartScreen } from '@/components/Overlay/StartScreen/StartScreen';
 import { SettingsDrawer } from '@/components/UI/SettingsDrawer/SettingsDrawer';
-import { TopBar } from '@/components/UI/TopBar/TopBar';
 import type { ThemeId } from '@/constants/themes';
+import { useAppUpdate } from '@/hooks/useAppUpdate';
 import type { SuspendedGame } from '@/types/game';
 import {
   loadBestScore,
@@ -34,6 +34,12 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
   // 自前管理されるため、ここで再読み込みする必要はない。
   const [bestScore] = useState(() => loadBestScore());
 
+  // 中断データはタイトル表示用に lazy 初期化で 1 度読み、
+  // 「再開しますか？」ダイアログを開くタイミングでも改めて参照する。
+  const [suspendedSnapshot, setSuspendedSnapshot] = useState<SuspendedGame | null>(() =>
+    loadSuspendedGame()
+  );
+
   // 設定 (テーマ / サウンド) は pre-start でも変更可能にしたいので
   // localStorage に直接 read/write する軽量 state を持つ。
   // InGameLayout 側の useGame も同じ localStorage を参照するため、
@@ -59,6 +65,7 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
   // 中断データがあれば「再開しますか？」ダイアログを表示。
   const [pendingResume, setPendingResume] = useState<SuspendedGame | null>(null);
   const handleStart = useCallback(() => {
+    // クリック時点で再読み込みして最新を確認する（他タブ等での変更に追随）。
     const suspended = loadSuspendedGame();
     if (suspended) {
       setPendingResume(suspended);
@@ -71,28 +78,38 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
     const data = pendingResume;
     setPendingResume(null);
     clearSuspendedGame();
+    setSuspendedSnapshot(null);
     onResume(data);
   }, [pendingResume, onResume]);
   const handleResumeNo = useCallback(() => {
     clearSuspendedGame();
     setPendingResume(null);
+    setSuspendedSnapshot(null);
     onStart();
   }, [onStart]);
 
+  // SW 更新まわり。useRegisterSW はアプリ全体で 1 度だけ呼びたいので
+  // PreStartLayout に集約する（in-game 中はバナーを出さない既存方針を維持）。
+  const { banner, checkForUpdate, isChecking, applyUpdate } = useAppUpdate();
+
   return (
     <div className={styles.layout}>
-      <TopBar
-        score={0}
-        bestScore={bestScore}
-        nextItem={null}
-        onOpenSettings={openSettings}
-      />
       <main className={styles.main}>
         <div className={styles.field_placeholder}>
-          <StartScreen onStart={handleStart} />
+          <StartScreen
+            onStart={handleStart}
+            onCheckUpdate={checkForUpdate}
+            isCheckingUpdate={isChecking}
+            bestScore={bestScore}
+            suspendedScore={suspendedSnapshot?.score ?? null}
+            onOpenSettings={openSettings}
+          />
         </div>
       </main>
-      <AppUpdater />
+      <AppUpdater
+        banner={banner}
+        onApply={applyUpdate}
+      />
       <SettingsDrawer
         open={isSettingsOpen}
         onClose={closeSettings}

@@ -3,6 +3,7 @@
 .banner {
   position: fixed;
   width: max-content;
+  max-width: calc(100vw - 32px);
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
@@ -19,6 +20,23 @@
   font-weight: 600;
   // セーフエリア（iOS ホームバー）への被りを避ける
   margin-bottom: env(safe-area-inset-bottom, 0);
+  animation: slide_up 0.2s ease-out;
+}
+
+// 「現在のバージョンは最新です」用。情報用なので彩度を抑えた色味に切り替える。
+.banner_info {
+  background: rgba(70, 110, 80, 0.92);
+}
+
+@keyframes slide_up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .message {

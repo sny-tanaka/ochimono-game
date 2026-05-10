@@ -22,6 +22,11 @@ export const GameLayout = () => {
   const handleResume = useCallback((data: SuspendedGame) => {
     setPhase({ kind: 'in-game', resume: data });
   }, []);
+  // 中断したらタイトルへ戻す。InGameLayout はアンマウントされて Matter も
+  // 後始末される。次にスタートを押すと中断データが拾われて再開ダイアログが出る。
+  const handleExitToTitle = useCallback(() => {
+    setPhase({ kind: 'pre-start' });
+  }, []);
 
   if (phase.kind === 'pre-start') {
     return (
@@ -31,5 +36,10 @@ export const GameLayout = () => {
       />
     );
   }
-  return <InGameLayout initialResume={phase.resume} />;
+  return (
+    <InGameLayout
+      initialResume={phase.resume}
+      onExitToTitle={handleExitToTitle}
+    />
+  );
 };

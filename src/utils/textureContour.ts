@@ -83,19 +83,11 @@ const readImageData = async (source: ImageBitmap | HTMLImageElement): Promise<Im
   return ctx.getImageData(0, 0, w, h);
 };
 
-// 抽出した輪郭は alpha 閾値での「シャープなエッジ」に沿うため、目に見える sprite の
-// アンチエイリアス端 / グロー / シャドウより数ピクセル内側に来る。
-// その結果 collision が sprite 見た目より一回り小さく、隣接アイテムが視覚的に
-// めり込んで見える ("ギリギリすぎ") 問題が出るので、centroid 中心に一律で
-// 数 % だけ inflate する。
-// 倍率での scale なら centroid 位置は変わらない（centroidOffset を再計算する必要なし）。
-const CONTOUR_INFLATE_FACTOR = 1.08;
-
-const inflateAroundCentroid = (vertices: Vec2[], centroid: Vec2, factor: number): Vec2[] =>
-  vertices.map((v) => ({
-    x: centroid.x + (v.x - centroid.x) * factor,
-    y: centroid.y + (v.y - centroid.y) * factor,
-  }));
+// 抽出した輪郭は alpha 閾値での「シャープなエッジ」に沿って取得する。
+// inflation などの追加処理はせず、artwork edge そのままを当たり判定の境界にする。
+// （以前 inflation を入れていたが、centroid から離れた頂点ほど絶対量が大きく拡大
+// される非等方拡大になるため、artwork の重心が中心からズレているケースで polygon が
+// 片側に偏った halo として見え「ズレているように見える」問題が起きた。）
 
 // テクスチャから輪郭を抽出してキャッシュに入れる。失敗時は null を入れる（次回以降スキップ）。
 export const extractContourForTexture = async (
@@ -115,11 +107,12 @@ export const extractContourForTexture = async (
         cache.set(url, null);
         return null;
       }
-      // 重心を計算してから centroid 中心に inflate（centroid は不変）。
+      // 真の幾何重心 (shoelace) を計算する。
+      // 単純頂点平均だと頂点が密集する曲線部分に重心が引きずられる。
+      // 面積重み付けの幾何重心なら artwork の本当の中心が安定して取れる。
       const centroid = computePolygonCentroid(raw);
-      const inflated = inflateAroundCentroid(raw, centroid, CONTOUR_INFLATE_FACTOR);
       const result: CachedContour = {
-        vertices: inflated,
+        vertices: raw,
         centroidOffset: {
           x: centroid.x - imageData.width / 2,
           y: centroid.y - imageData.height / 2,

@@ -14104,7 +14104,7 @@ const cv = H.memo(
                 : null,
               I.jsx('footer', {
                 className: on.footer,
-                children: I.jsxs('span', { className: on.version, children: ['v', '1.0.31'] }),
+                children: I.jsxs('span', { className: on.version, children: ['v', '1.0.32'] }),
               }),
             ],
           }),

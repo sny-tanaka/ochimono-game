@@ -20,6 +20,11 @@ body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  // Android Chrome / デスクトップ Chrome 系でタップ時に発生する半透明青のハイライトを抑止。
+  // ゲーム盤面のような大きな pointer 要素全体が一瞬青くフラッシュする現象が出る。
+  // iOS Safari は自前のフォーカス制御があるので元々目立たないが、明示しておけば全環境で
+  // 統一できる。
+  -webkit-tap-highlight-color: transparent;
 }
 
 // .layout は 100svh (最小ビューポート) なので URL バー収納時に layout の下に

@@ -21,3 +21,9 @@ body {
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+
+// .layout は 100svh (最小ビューポート) なので URL バー収納時に layout の下に
+// 隙間が出る。隙間を layout のグラデ末端色で塗って繋ぎ目を消す。
+body {
+  background-color: #f1e7ff;
+}

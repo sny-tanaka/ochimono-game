@@ -2,7 +2,12 @@
 
 .layout {
   width: 100%;
-  height: 100dvh;
+  // 100dvh だと URL バーの表示・非表示で viewport 高さが動的に変わり、
+  // 1 回限りの useLayoutEffect 測定値と表示時の高さが食い違って field_wrapper が
+  // overflow するケースがある (mobile Safari)。
+  // 100svh = 最小ビューポート (URL バー表示時) を採用して、URL バーが収納されても
+  // layout の大きさが変わらないようにする。収納時は body の背景（同色）が下に見える。
+  height: 100svh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(180deg, #fdf4ff 0%, #f1e7ff 100%);

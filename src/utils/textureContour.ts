@@ -21,16 +21,45 @@ type CachedContour = {
 const cache = new Map<string, CachedContour | null>(); // null = 抽出失敗（フォールバック用）
 const inflight = new Map<string, Promise<CachedContour | null>>();
 
-// 不透明領域の重心（単純平均）。
-const computeCentroid = (vertices: Vec2[]): Vec2 => {
-  if (vertices.length === 0) return { x: 0, y: 0 };
-  let sx = 0;
-  let sy = 0;
-  for (const v of vertices) {
-    sx += v.x;
-    sy += v.y;
+// 多角形の **幾何重心** (geometric centroid) を shoelace ベースで計算する。
+// 頂点単純平均だと曲線部分（頂点が密集する箇所）に重心が引きずられて、
+// PNG 中心とズレた位置を「重心」と扱ってしまい sprite と polygon が縦横にズレる。
+// 面積で正しく重み付けされたこの式なら、輪郭の幾何中心が安定して取れる。
+const computePolygonCentroid = (vertices: Vec2[]): Vec2 => {
+  const n = vertices.length;
+  if (n === 0) return { x: 0, y: 0 };
+  if (n < 3) {
+    // フォールバック: 頂点平均
+    let sx = 0;
+    let sy = 0;
+    for (const v of vertices) {
+      sx += v.x;
+      sy += v.y;
+    }
+    return { x: sx / n, y: sy / n };
   }
-  return { x: sx / vertices.length, y: sy / vertices.length };
+  let cx = 0;
+  let cy = 0;
+  let area2 = 0; // 符号付き面積 × 2
+  for (let i = 0; i < n; i += 1) {
+    const v0 = vertices[i];
+    const v1 = vertices[(i + 1) % n];
+    const cross = v0.x * v1.y - v1.x * v0.y;
+    cx += (v0.x + v1.x) * cross;
+    cy += (v0.y + v1.y) * cross;
+    area2 += cross;
+  }
+  if (area2 === 0) {
+    // 退化（直線になっている等）。頂点平均にフォールバック。
+    let sx = 0;
+    let sy = 0;
+    for (const v of vertices) {
+      sx += v.x;
+      sy += v.y;
+    }
+    return { x: sx / n, y: sy / n };
+  }
+  return { x: cx / (3 * area2), y: cy / (3 * area2) };
 };
 
 // ImageBitmap / HTMLImageElement を offscreen canvas に描画して ImageData を取り出す。
@@ -54,6 +83,12 @@ const readImageData = async (source: ImageBitmap | HTMLImageElement): Promise<Im
   return ctx.getImageData(0, 0, w, h);
 };
 
+// 抽出した輪郭は alpha 閾値での「シャープなエッジ」に沿って取得する。
+// inflation などの追加処理はせず、artwork edge そのままを当たり判定の境界にする。
+// （以前 inflation を入れていたが、centroid から離れた頂点ほど絶対量が大きく拡大
+// される非等方拡大になるため、artwork の重心が中心からズレているケースで polygon が
+// 片側に偏った halo として見え「ズレているように見える」問題が起きた。）
+
 // テクスチャから輪郭を抽出してキャッシュに入れる。失敗時は null を入れる（次回以降スキップ）。
 export const extractContourForTexture = async (
   url: string,
@@ -72,8 +107,10 @@ export const extractContourForTexture = async (
         cache.set(url, null);
         return null;
       }
-      // 重心を計算してオフセットだけ控えておく（頂点はピクセル座標のまま保持）。
-      const centroid = computeCentroid(raw);
+      // 真の幾何重心 (shoelace) を計算する。
+      // 単純頂点平均だと頂点が密集する曲線部分に重心が引きずられる。
+      // 面積重み付けの幾何重心なら artwork の本当の中心が安定して取れる。
+      const centroid = computePolygonCentroid(raw);
       const result: CachedContour = {
         vertices: raw,
         centroidOffset: {

@@ -50,14 +50,13 @@ vi.mock('@/hooks/useGame', () => ({
 }));
 
 describe('HomePage', () => {
-  test('スタート画面が表示される', () => {
+  test('タイトル画面のスタートボタンが表示される', () => {
     render(<Page />);
     expect(screen.getByRole('button', { name: 'スタート' })).toBeInTheDocument();
   });
 
-  test('上部バーにスコアと NEXT が表示される', () => {
+  test('タイトル画面に更新確認ボタンが表示される', () => {
     render(<Page />);
-    expect(screen.getByTestId('score-value')).toHaveTextContent('0');
-    expect(screen.getByTestId('next-item')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '更新確認' })).toBeInTheDocument();
   });
 });

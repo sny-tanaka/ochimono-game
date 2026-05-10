@@ -1,56 +1,199 @@
 @use 'variables' as var;
 
-.overlay {
+// タイトル画面はフィールド領域いっぱいに広げて、ダイアログ風のカードは置かない。
+// 上部 hero、中央 (任意の中断バッジ)、下部 actions、フッター version の縦割り。
+.screen {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 24px;
+  background: linear-gradient(180deg, #fff5fb 0%, #ede1ff 100%);
+}
+
+// 右上の設定歯車ボタン。タイトルでは TopBar を出さないので浮かせ置き。
+.settings {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: #6b4fa0;
+  font-size: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(107, 79, 160, 0.18);
+  transition: transform 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    background: #fff;
+  }
+  &:active {
+    transform: scale(0.92);
+  }
 }
 
-.panel {
-  background: #fff;
-  border-radius: 20px;
-  padding: 28px 22px;
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  width: 100%;
-  max-width: 280px;
-  box-shadow: 0 12px 40px rgba(107, 79, 160, 0.25);
+  margin-top: 16px;
+}
+
+.emojis {
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  // 装飾的なふんわり影
+  filter: drop-shadow(0 6px 12px rgba(255, 91, 156, 0.25));
+  margin-bottom: 18px;
 }
 
 .title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 800;
-  color: #6b4fa0;
+  color: #5b3a92;
   margin: 0 0 12px;
-  line-height: 1.4;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+  text-shadow: 0 2px 0 #fff;
 }
 
 .lead {
   font-size: 14px;
-  color: #4a3c70;
-  margin: 0 0 20px;
+  color: #6e4f9c;
+  margin: 0;
   line-height: 1.6;
+}
+
+// hero と actions の間の情報行。常時 BEST、任意で中断バッジを並べる。
+.info {
+  margin: 28px auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+// BEST スコア表示。常時表示なので主張は控えめに。
+.best {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(107, 79, 160, 0.18);
+}
+
+// 中断データバッジ。BEST より一段目立たせる（破線 + ボーダー濃いめ）。
+.suspended {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px dashed #c89bff;
+  box-shadow: 0 4px 14px rgba(107, 79, 160, 0.12);
+}
+
+.suspended_badge {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b4fa0;
+  letter-spacing: 0.06em;
+}
+
+.suspended_score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.info_label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #b08ce0;
+  letter-spacing: 0.1em;
+}
+
+.info_value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #4a3578;
+  font-variant-numeric: tabular-nums;
+}
+
+// 主・副アクションを縦に積む。下から 24px 浮かせて指の届きやすい位置に。
+.actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .start {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   background: linear-gradient(180deg, #b8a4ff 0%, #6b4fa0 100%);
   color: #fff;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow: 0 4px 0 #4a3578;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 6px 0 #4a3578;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
 
   &:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 #4a3578;
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 #4a3578;
   }
+}
+
+// 副アクション。スタートより一段地味に。透過 + 細枠でセカンダリ感を出す。
+.check_update {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid rgba(107, 79, 160, 0.35);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #6b4fa0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.85);
+  }
+  &:disabled {
+    cursor: progress;
+    color: #a692c8;
+    border-color: rgba(107, 79, 160, 0.18);
+  }
+}
+
+.version {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a692c8;
+  letter-spacing: 0.08em;
 }

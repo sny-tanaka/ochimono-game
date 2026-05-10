@@ -31,7 +31,7 @@ define(['./workbox-1ef09536'], function (e) {
   }),
     e.precacheAndRoute(
       [
-        { url: 'index.html', revision: '46a5de54c05aa4679f2ee773f5eceb6e' },
+        { url: 'index.html', revision: '187a0d168cf0cb926717f5fe3d0cd347' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'sounds/punyu.mp3', revision: 'a36dc54f82e9199637f75dad46b2d7c9' },
@@ -46,7 +46,7 @@ define(['./workbox-1ef09536'], function (e) {
         { url: 'images/gumi/level02.png', revision: '27de8023b13180567a123b5f3278d6ae' },
         { url: 'images/gumi/level01.png', revision: 'dc3baaa14ec9dc5f2b70eb2db0ab3b18' },
         { url: 'assets/workbox-window.prod.es5-BIl4cyR9.js', revision: null },
-        { url: 'assets/index-BTp4Vv0r.js', revision: null },
+        { url: 'assets/index-DwrnEZ_k.js', revision: null },
         { url: 'assets/index-BEkKeObq.css', revision: null },
         { url: 'icon-192.png', revision: '8179bef49d2480bac76293141a9851ba' },
         { url: 'icon-512.png', revision: 'a4e8fac1df09f9186affe8d3f3b981bb' },

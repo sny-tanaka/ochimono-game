@@ -20,19 +20,33 @@ type Props = {
   // PreStartLayout で「中断から再開」を選んだ場合に渡される。
   // null の場合は通常スタート。
   initialResume: SuspendedGame | null;
+  // 中断 (suspend) 時にタイトルへ戻るためのコールバック。
+  // GameLayout 側で phase を 'pre-start' に戻す。
+  onExitToTitle: () => void;
 };
 
 const GameContent = ({
   size,
   initialResume,
+  onExitToTitle,
 }: {
   size: Size;
   initialResume: SuspendedGame | null;
+  onExitToTitle: () => void;
 }) => {
   const game = useGame({ fieldWidth: size.width, fieldHeight: size.height });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
+
+  // 中断を押したら localStorage に保存後、即タイトルへ戻る。
+  // game.suspend() は status を 'idle' に戻すが、新アーキテクチャでは
+  // InGameLayout が status='idle' をハンドルしないので、明示的に
+  // pre-start phase へ遷移させる。
+  const handleSuspend = useCallback(() => {
+    game.suspend();
+    onExitToTitle();
+  }, [game, onExitToTitle]);
 
   // マウント時に即 start / resume する。PreStartLayout でスタート判定済みなので
   // ここで「タイトル画面 → スタートを押す」のフローは挟まない。
@@ -117,13 +131,13 @@ const GameContent = ({
         isSoundOn={game.isSoundOn}
         onToggleSound={game.toggleSound}
         canSuspend={game.status === 'playing'}
-        onSuspend={game.suspend}
+        onSuspend={handleSuspend}
       />
     </>
   );
 };
 
-export const InGameLayout = ({ initialResume }: Props) => {
+export const InGameLayout = ({ initialResume, onExitToTitle }: Props) => {
   // <main> 領域サイズを実測してフィールドサイズに使う。
   // 計測前は null。useLayoutEffect で初回 1 度だけ計測する（リサイズ非対応）。
   // PreStartLayout からマウントされるタイミングで計測されるので、
@@ -159,6 +173,7 @@ export const InGameLayout = ({ initialResume }: Props) => {
       <GameContent
         size={size}
         initialResume={initialResume}
+        onExitToTitle={onExitToTitle}
       />
     </div>
   );

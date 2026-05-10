@@ -25,6 +25,13 @@ import { createItemBody, createWalls, getItemDataFromBody, midpoint } from '@/ut
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
 import { loadThemeId, saveThemeId } from '@/utils/storage';
 
+// `yarn debug` で起動された時のみ true。
+// 通常モードでは Lv1〜MAX_DROPPABLE_LEVEL からランダム抽選するが、デバッグモードでは
+// Lv1→Lv2→…→Lv10→Lv1→… と順番に出して全レベルの見た目・物理挙動を一巡確認できるようにする。
+// import.meta.env.VITE_DEBUG はビルド時に静的置換されるため、本番ビルドでは
+// false になり、下の if 分岐ごと dead code として除去される。
+const IS_DEBUG = import.meta.env.VITE_DEBUG === '1';
+
 // (level, themeId) → 解決済みテクスチャ URL のキャッシュ。
 // itemForFieldWidth とは別に、文字列レベルでも同一参照を返せるようにして
 // Matter.Render が内部で使う `render.textures[url]` のキャッシュヒット率を高める。
@@ -273,8 +280,18 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   // 連打中に高コスト + 配列確保が走るため、アイテム body は自前 Set でも保持する。
   const itemBodiesRef = useRef<Set<Matter.Body>>(new Set());
 
+  // デバッグモードで「次に出す Lv（1〜MAX_ITEM_LEVEL）」を保持。start でリセットされる。
+  // 通常モードでは未使用。
+  const debugSequenceRef = useRef(1);
+
   const pickRandomDroppable = useCallback((): ItemDefinition => {
-    const level = Math.floor(Math.random() * MAX_DROPPABLE_LEVEL) + 1;
+    let level: number;
+    if (IS_DEBUG) {
+      level = debugSequenceRef.current;
+      debugSequenceRef.current = (level % MAX_ITEM_LEVEL) + 1;
+    } else {
+      level = Math.floor(Math.random() * MAX_DROPPABLE_LEVEL) + 1;
+    }
     return itemForFieldWidth(level, fieldWidthRef.current, themeIdRef.current);
   }, []);
 
@@ -825,6 +842,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     gameOverDangerSinceRef.current = null;
     lastCountdownRef.current = null;
     setGameOverCountdown(null);
+    debugSequenceRef.current = 1;
     setCurrentItemSynced(pickRandomDroppable());
     setNextItemSynced(pickRandomDroppable());
     canDropRef.current = true;

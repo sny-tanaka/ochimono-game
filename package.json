@@ -1,10 +1,11 @@
 {
   "name": "ochimono-game",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "debug": "VITE_DEBUG=1 vite",
     "build": "node scripts/bump-patch-version.mjs && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",

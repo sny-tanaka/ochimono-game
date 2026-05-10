@@ -83,8 +83,16 @@ export const createPolygonItemBody = (
 /** @deprecated Use createCircleItemBody / createPolygonItemBody. Kept for backward compat. */
 export const createItemBody = createCircleItemBody;
 
+// 複合 body (compound) の場合 parts[0] が親、parts[1..] が子。
+// 多角形 body は poly-decomp で凸分解されて compound parts になることがあり、
+// Matter の collisionStart は **子 part** を pair.bodyA / pair.bodyB に入れてくる。
+// itemData は parent にしか付与していないので、ここで parent まで辿る。
+// 非 compound body の場合 body.parent === body なので追加コストは無い。
+export const rootBodyOf = (body: Matter.Body): Matter.Body =>
+  body.parent && body.parent !== body ? body.parent : body;
+
 export const getItemDataFromBody = (body: Matter.Body): ItemBodyData | undefined =>
-  (body as BodyWithItemPlugin).plugin.itemData;
+  (rootBodyOf(body) as BodyWithItemPlugin).plugin.itemData;
 
 // 上下左右の壁を生成
 export const createWalls = (

@@ -28,6 +28,7 @@ import {
   createWalls,
   getItemDataFromBody,
   midpoint,
+  rootBodyOf,
 } from '@/utils/physics';
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
 import { loadThemeId, saveThemeId } from '@/utils/storage';
@@ -300,17 +301,25 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
 
   // マグネットで対象に指定した body を MAGNET_TARGET カテゴリに切り替える。
   // 結果: 壁と他の対象には衝突するが、非対象 item とは衝突せず擦り抜ける。
+  // 多角形 body は compound parts に分解されることがあり、collisionFilter は
+  // **part ごとに独立** している。SAT は part 単位で衝突を判定するので、
+  // parent だけ書き換えても child part が残ってしまうと擦り抜けが効かない。
+  // 確実に効かせるため body.parts （compound 親 + 全 child）に同じ filter を当てる。
   const tagAsMagnetTarget = useCallback((body: Matter.Body) => {
-    body.collisionFilter.category = COLLISION_CATEGORY.magnetTarget;
-    body.collisionFilter.mask = MAGNET_TARGET_COLLISION_MASK;
+    for (const part of body.parts) {
+      part.collisionFilter.category = COLLISION_CATEGORY.magnetTarget;
+      part.collisionFilter.mask = MAGNET_TARGET_COLLISION_MASK;
+    }
     magnetTaggedBodiesRef.current.add(body);
   }, []);
 
   // 対象タグを通常 item に戻す。発動終了 / 中断 / restart で必ず呼ぶ。
   const untagAllMagnetTargets = useCallback(() => {
     for (const body of magnetTaggedBodiesRef.current) {
-      body.collisionFilter.category = COLLISION_CATEGORY.item;
-      body.collisionFilter.mask = ITEM_COLLISION_MASK;
+      for (const part of body.parts) {
+        part.collisionFilter.category = COLLISION_CATEGORY.item;
+        part.collisionFilter.mask = ITEM_COLLISION_MASK;
+      }
     }
     magnetTaggedBodiesRef.current.clear();
   }, []);
@@ -467,8 +476,14 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     const engine = engineRef.current;
     if (!engine) return;
 
-    const dataA = getItemDataFromBody(bodyA);
-    const dataB = getItemDataFromBody(bodyB);
+    // 多角形 body は poly-decomp により compound parts に分解されることがあり、
+    // collisionStart リスナーには child part がそのまま渡ってくる。
+    // 削除や Set 管理はすべて parent (= itemBodiesRef に登録した本体) を対象にする。
+    const rootA = rootBodyOf(bodyA);
+    const rootB = rootBodyOf(bodyB);
+
+    const dataA = getItemDataFromBody(rootA);
+    const dataB = getItemDataFromBody(rootB);
     if (!dataA || !dataB) return;
     if (dataA.consumed || dataB.consumed) return;
     if (dataA.level !== dataB.level) return;
@@ -477,11 +492,11 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     dataB.consumed = true;
 
     const mergedLevel = dataA.level + 1;
-    const center = midpoint(bodyA, bodyB);
+    const center = midpoint(rootA, rootB);
 
-    Matter.World.remove(engine.world, [bodyA, bodyB]);
-    itemBodiesRef.current.delete(bodyA);
-    itemBodiesRef.current.delete(bodyB);
+    Matter.World.remove(engine.world, [rootA, rootB]);
+    itemBodiesRef.current.delete(rootA);
+    itemBodiesRef.current.delete(rootB);
 
     let addedScore = 0;
     let isSpecial = false;

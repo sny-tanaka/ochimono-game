@@ -1,162 +1,35 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import styles from './style.module.scss';
+import { InGameLayout } from './InGameLayout';
+import { PreStartLayout } from './PreStartLayout';
 
-import { GameField } from '@/components/Game/GameField/GameField';
-import { CountdownOverlay } from '@/components/Overlay/CountdownOverlay/CountdownOverlay';
-import { GameOverScreen } from '@/components/Overlay/GameOverScreen/GameOverScreen';
-import { MagnetSelectingOverlay } from '@/components/Overlay/MagnetSelectingOverlay/MagnetSelectingOverlay';
-import { ResumeDialog } from '@/components/Overlay/ResumeDialog/ResumeDialog';
-import { SkillEffectOverlay } from '@/components/Overlay/SkillEffectOverlay/SkillEffectOverlay';
-import { StartScreen } from '@/components/Overlay/StartScreen/StartScreen';
-import { SettingsDrawer } from '@/components/UI/SettingsDrawer/SettingsDrawer';
-import { SkillButton } from '@/components/UI/SkillButton/SkillButton';
-import { SkillMenu } from '@/components/UI/SkillMenu/SkillMenu';
-import { TopBar } from '@/components/UI/TopBar/TopBar';
-import { useGame } from '@/hooks/useGame';
 import type { SuspendedGame } from '@/types/game';
 
-type Size = { width: number; height: number };
-
-const GameContent = ({ size }: { size: Size }) => {
-  const game = useGame({ fieldWidth: size.width, fieldHeight: size.height });
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const openSettings = useCallback(() => setIsSettingsOpen(true), []);
-  const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
-
-  // タイトルでスタートを押した時、中断データがあれば「再開しますか？」ダイアログを出す。
-  // ダイアログ中はこの state に SuspendedGame が入っている。null は非表示。
-  const [pendingResume, setPendingResume] = useState<SuspendedGame | null>(null);
-  const handleStart = useCallback(() => {
-    const suspended = game.loadSuspended();
-    if (suspended) {
-      setPendingResume(suspended);
-    } else {
-      game.start();
-    }
-  }, [game]);
-  const handleResumeYes = useCallback(() => {
-    if (pendingResume) game.resume(pendingResume);
-    game.clearSuspended();
-    setPendingResume(null);
-  }, [game, pendingResume]);
-  const handleResumeNo = useCallback(() => {
-    game.clearSuspended();
-    setPendingResume(null);
-    game.start();
-  }, [game]);
-
-  return (
-    <>
-      <TopBar
-        score={game.score}
-        bestScore={game.bestScore}
-        nextItem={game.nextItem}
-        onOpenSettings={openSettings}
-      />
-      <main className={styles.main}>
-        <div
-          className={styles.field_wrapper}
-          style={{ width: `${size.width}px`, height: `${size.height}px` }}
-        >
-          <GameField
-            canvasContainerRef={game.canvasContainerRef}
-            fieldWidth={size.width}
-            fieldHeight={size.height}
-            gameOverLineY={game.gameOverLineY}
-            currentItem={game.currentItem}
-            mergeEffectRef={game.mergeEffectRef}
-            canInteract={game.status === 'playing'}
-            onDrop={game.drop}
-            isMagnetSelecting={game.isMagnetSelecting}
-            onMagnetSelect={game.selectMagnetTarget}
-          />
-          <SkillEffectOverlay effect={game.isGravityFlipped ? 'gravityFlip' : null} />
-          <MagnetSelectingOverlay
-            active={game.isMagnetSelecting}
-            onCancel={game.cancelMagnetSelecting}
-          />
-          <CountdownOverlay seconds={game.status === 'playing' ? game.gameOverCountdown : null} />
-          {game.status === 'playing' ? (
-            <div className={styles.skill_button_wrapper}>
-              <SkillButton
-                gauge={game.skillGauge}
-                segmentMax={game.skillSegmentMax}
-                segmentCount={game.skillSegmentCount}
-                canOpen={game.canOpenSkillMenu}
-                onClick={game.openSkillMenu}
-              />
-            </div>
-          ) : null}
-          {game.status === 'idle' ? <StartScreen onStart={handleStart} /> : null}
-          {game.status === 'gameover' ? (
-            <GameOverScreen
-              score={game.score}
-              bestScore={game.bestScore}
-              isNewRecord={game.isNewRecord}
-              onRestart={game.restart}
-            />
-          ) : null}
-        </div>
-      </main>
-      <SkillMenu
-        open={game.isSkillMenuOpen}
-        onSelect={game.selectSkill}
-        onClose={game.closeSkillMenu}
-        canUse={game.canUseSkill}
-        magnetUsesLeft={game.magnetUsesLeft}
-        magnetMaxUses={game.magnetMaxUses}
-      />
-      <SettingsDrawer
-        open={isSettingsOpen}
-        onClose={closeSettings}
-        themeId={game.themeId}
-        onChangeTheme={game.setThemeId}
-        isSoundOn={game.isSoundOn}
-        onToggleSound={game.toggleSound}
-        canSuspend={game.status === 'playing'}
-        onSuspend={game.suspend}
-      />
-      <ResumeDialog
-        open={pendingResume !== null}
-        onYes={handleResumeYes}
-        onNo={handleResumeNo}
-      />
-    </>
-  );
-};
+// アプリの 2 フェーズを切り替える薄いラッパ。
+// - 'pre-start': タイトル / 設定 / 中断再開ダイアログのみ。useGame は使わず Matter も生成しない。
+//   AppUpdater バナーがフロー内で表示されるためレイアウトが安全に縮む。
+// - 'in-game': 実際にプレイ中のレイアウト。マウント時に <main> を実測し、
+//   その値を fieldWidth / fieldHeight として useGame に渡し Matter を起動する。
+// ゲームオーバー → リスタートは InGameLayout 内で完結し、pre-start には戻らない。
+type Phase = { kind: 'pre-start' } | { kind: 'in-game'; resume: SuspendedGame | null };
 
 export const GameLayout = () => {
-  // <main> 領域サイズを実測してフィールドサイズに使う。
-  // 計測前は null。useLayoutEffect で初回 1 度だけ計測する（リサイズ非対応）。
-  const measureRef = useRef<HTMLElement | null>(null);
-  const [size, setSize] = useState<Size | null>(null);
+  const [phase, setPhase] = useState<Phase>({ kind: 'pre-start' });
 
-  useLayoutEffect(() => {
-    const el = measureRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setSize({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+  const handleStart = useCallback(() => {
+    setPhase({ kind: 'in-game', resume: null });
+  }, []);
+  const handleResume = useCallback((data: SuspendedGame) => {
+    setPhase({ kind: 'in-game', resume: data });
   }, []);
 
-  if (size === null) {
+  if (phase.kind === 'pre-start') {
     return (
-      <div className={styles.layout}>
-        <div
-          className={styles.top_bar_placeholder}
-          aria-hidden="true"
-        />
-        <main
-          ref={measureRef}
-          className={styles.main}
-        />
-      </div>
+      <PreStartLayout
+        onStart={handleStart}
+        onResume={handleResume}
+      />
     );
   }
-
-  return (
-    <div className={styles.layout}>
-      <GameContent size={size} />
-    </div>
-  );
+  return <InGameLayout initialResume={phase.resume} />;
 };

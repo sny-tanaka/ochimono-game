@@ -33,6 +33,15 @@
   overflow: hidden;
 }
 
+// PreStartLayout 用：StartScreen overlay (position: absolute) を被せる
+// ための位置決め基準。<main> 内で残りスペースをすべて埋める。
+.field_placeholder {
+  position: relative;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+}
+
 .skill_button_wrapper {
   position: absolute;
   right: 16px;

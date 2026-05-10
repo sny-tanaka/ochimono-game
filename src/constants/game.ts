@@ -13,5 +13,6 @@ export const GAME = {
     scoreHistory: 'ochimono.scoreHistory',
     isSoundOn: 'ochimono.isSoundOn',
     themeId: 'ochimono.themeId',
+    suspended: 'ochimono.suspended',
   },
 } as const;

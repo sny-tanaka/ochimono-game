@@ -40,6 +40,10 @@ vi.mock('@/hooks/useGame', () => ({
     selectMagnetTarget: () => {},
     isGravityFlipped: false,
     gameOverCountdown: null,
+    suspend: () => {},
+    resume: () => {},
+    loadSuspended: () => null,
+    clearSuspended: () => {},
   }),
 }));
 

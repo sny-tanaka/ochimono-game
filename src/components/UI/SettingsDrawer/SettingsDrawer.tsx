@@ -13,12 +13,24 @@ type Props = {
   onChangeTheme: (id: ThemeId) => void;
   isSoundOn: boolean;
   onToggleSound: () => void;
+  // 中断機能：プレイ中だけ有効。タイトル / ゲームオーバー時はボタンを描画しない。
+  canSuspend: boolean;
+  onSuspend: () => void;
 };
 
 // 右からスライドインする設定ドロワー。テーマ / サウンド / バージョンを集約する。
 // TopBar の混雑を緩和するための、設定群を非常駐にする受け皿。
 export const SettingsDrawer = memo(
-  ({ open, onClose, themeId, onChangeTheme, isSoundOn, onToggleSound }: Props) => {
+  ({
+    open,
+    onClose,
+    themeId,
+    onChangeTheme,
+    isSoundOn,
+    onToggleSound,
+    canSuspend,
+    onSuspend,
+  }: Props) => {
     if (!open) return null;
     return (
       <div
@@ -57,6 +69,18 @@ export const SettingsDrawer = memo(
               onToggle={onToggleSound}
             />
           </div>
+          {canSuspend ? (
+            <button
+              type="button"
+              className={styles.suspend}
+              onClick={() => {
+                onSuspend();
+                onClose();
+              }}
+            >
+              中断
+            </button>
+          ) : null}
           <footer className={styles.footer}>
             <span className={styles.version}>v{__APP_VERSION__}</span>
           </footer>

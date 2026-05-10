@@ -80,6 +80,21 @@
   font-size: 16px;
   font-weight: 800;
   color: #4a3382;
+  // マグネットの「残り N 回」表示は label の右に inline で続ける
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+// マグネット必殺技の 1 ゲーム内残り使用回数表示。目立つよう赤系。
+.choice_uses {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ff3858;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  // disabled (= 0 回) のときは親 .choice_disabled の opacity でグレーアウトされる
 }
 
 .choice_desc {

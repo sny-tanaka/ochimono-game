@@ -55,6 +55,9 @@ export const loadSuspendedGame = (): SuspendedGame | null => {
       currentItemLevel: isFiniteNumber(o.currentItemLevel) ? o.currentItemLevel : 1,
       nextItemLevel: isFiniteNumber(o.nextItemLevel) ? o.nextItemLevel : 1,
       skillGauge: isFiniteNumber(o.skillGauge) ? o.skillGauge : 0,
+      // 古い保存データには magnetUsesLeft が無い。undefined のまま返して、
+      // 復元側でデフォルト値（満タン）を当てる。
+      magnetUsesLeft: isFiniteNumber(o.magnetUsesLeft) ? o.magnetUsesLeft : undefined,
       bodies,
     };
   } catch {

@@ -54,6 +54,20 @@ const readImageData = async (source: ImageBitmap | HTMLImageElement): Promise<Im
   return ctx.getImageData(0, 0, w, h);
 };
 
+// 抽出した輪郭は alpha 閾値での「シャープなエッジ」に沿うため、目に見える sprite の
+// アンチエイリアス端 / グロー / シャドウより数ピクセル内側に来る。
+// その結果 collision が sprite 見た目より一回り小さく、隣接アイテムが視覚的に
+// めり込んで見える ("ギリギリすぎ") 問題が出るので、centroid 中心に一律で
+// 数 % だけ inflate する。
+// 倍率での scale なら centroid 位置は変わらない（centroidOffset を再計算する必要なし）。
+const CONTOUR_INFLATE_FACTOR = 1.08;
+
+const inflateAroundCentroid = (vertices: Vec2[], centroid: Vec2, factor: number): Vec2[] =>
+  vertices.map((v) => ({
+    x: centroid.x + (v.x - centroid.x) * factor,
+    y: centroid.y + (v.y - centroid.y) * factor,
+  }));
+
 // テクスチャから輪郭を抽出してキャッシュに入れる。失敗時は null を入れる（次回以降スキップ）。
 export const extractContourForTexture = async (
   url: string,
@@ -72,10 +86,11 @@ export const extractContourForTexture = async (
         cache.set(url, null);
         return null;
       }
-      // 重心を計算してオフセットだけ控えておく（頂点はピクセル座標のまま保持）。
+      // 重心を計算してから centroid 中心に inflate（centroid は不変）。
       const centroid = computeCentroid(raw);
+      const inflated = inflateAroundCentroid(raw, centroid, CONTOUR_INFLATE_FACTOR);
       const result: CachedContour = {
-        vertices: raw,
+        vertices: inflated,
         centroidOffset: {
           x: centroid.x - imageData.width / 2,
           y: centroid.y - imageData.height / 2,

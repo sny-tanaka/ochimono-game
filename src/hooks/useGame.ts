@@ -122,10 +122,15 @@ const buildItemBody = (
 // Matter.Render のテクスチャキャッシュ (`render.textures[url]`) に直接登録する。
 // これにより Matter._getTexture が初使用時に `new Image()` を作って decode するパスが
 // スキップされ、合体時のフレーム詰まり（特に大きい PNG: level08 / level10）が緩和される。
-const preloadedTextures = new Set<string>();
+//
+// dedup 用の Set は呼び出し側 (useGame の ref) から渡してもらう。
+// useGame が unmount/remount される (中断 → タイトル → 再開) と render は再生成されるので、
+// dedup Set もインスタンス毎にリセットしないと「先読み済みだが新しい render.textures
+// には入っていない」状態になり、アイテムスプライトが描画されなくなる不具合になる。
 const preloadTexturesForTheme = async (
   themeId: ThemeId,
-  render: Matter.Render | null
+  render: Matter.Render | null,
+  preloadedTextures: Set<string>
 ): Promise<void> => {
   for (let level = 1; level <= MAX_ITEM_LEVEL; level += 1) {
     // svgPath は items の imagePathForTheme と同形式。Item を生成して URL だけ拾う。
@@ -252,6 +257,12 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
   // アイテム半径のスケールも fieldWidth に依存するため同じ ref を共有する。
   const fieldWidthRef = useRef(fieldWidth);
   const fieldHeightRef = useRef(fieldHeight);
+
+  // 先読み済みテクスチャ URL の dedup 用 Set。useGame インスタンス毎に持つ。
+  // module スコープに置くと、中断 → タイトル → 再開で useGame が再マウントされた時に
+  // 旧セッションの「先読み済み」フラグが残り、新しい render.textures に
+  // ImageBitmap が登録されずアイテムが見えなくなる不具合になる。
+  const preloadedTexturesRef = useRef<Set<string>>(new Set());
 
   // テーマ ID。初期値は localStorage 由来。lazy init で初回フラッシュを避ける。
   const [themeId, setThemeIdState] = useState<ThemeId>(() => loadThemeId());
@@ -455,7 +466,10 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     // 全テーマのテクスチャを先読みして初回 decode コストを排除。
     // start 前から先読みしておけばテーマ切替直後の表示も滑らか。
     // 非同期でバックグラウンド処理にするので await はしない。
-    for (const t of THEMES) void preloadTexturesForTheme(t.id, render);
+    // dedup Set はこの useGame インスタンス専用。再マウント時は念のため空に戻す。
+    preloadedTexturesRef.current = new Set();
+    for (const t of THEMES)
+      void preloadTexturesForTheme(t.id, render, preloadedTexturesRef.current);
 
     // タブ・アプリ非アクティブ時は物理計算もレンダリングも止めて発熱・電池消費を抑える。
     // 復帰時はそのまま再開（経過時間で大幅にズレないよう Runner の dt に頼る）。
@@ -692,7 +706,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     const engine = engineRef.current;
     if (engine) {
       // テーマ切替時のテクスチャ先読み（バックグラウンド）
-      void preloadTexturesForTheme(themeId, renderRef.current);
+      void preloadTexturesForTheme(themeId, renderRef.current, preloadedTexturesRef.current);
       for (const body of itemBodiesRef.current) {
         const data = getItemDataFromBody(body);
         if (!data || data.consumed) continue;

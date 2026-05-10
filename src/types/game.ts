@@ -1,3 +1,4 @@
+import type { ThemeId } from '@/constants/themes';
 import type { ItemDefinition } from '@/types/item';
 
 export type GameStatus = 'idle' | 'playing' | 'gameover';
@@ -12,4 +13,32 @@ export type GameState = {
   nextItem: ItemDefinition | null;
   canDrop: boolean;
   isSoundOn: boolean;
+};
+
+// 中断時に localStorage に保存する 1 個のアイテム body のスナップショット。
+// アイテム種別は level だけで決定する（半径などは復元時にその時点の定数から再計算）。
+export type SuspendedBody = {
+  level: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  angularVelocity: number;
+};
+
+// 中断データの全体構造。後方互換のため、フィールドが追加された時に欠けていても
+// 復元側でデフォルトを使えるように個別にバリデーションする。
+export type SuspendedGame = {
+  // 構造のバージョン。互換性破壊した時にだけ上げる。読み込み側は不明バージョンでも
+  // 必須フィールドが揃っていればベストエフォートで復元する。
+  version: number;
+  // 保存時刻（ms）。診断用。
+  savedAt: number;
+  score: number;
+  themeId: ThemeId;
+  currentItemLevel: number;
+  nextItemLevel: number;
+  skillGauge: number;
+  bodies: SuspendedBody[];
 };

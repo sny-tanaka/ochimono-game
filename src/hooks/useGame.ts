@@ -19,11 +19,12 @@ import { gaugeGainForMerge, SKILL, skillCostPoints, type SkillKind } from '@/con
 import { THEMES, type ThemeId } from '@/constants/themes';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
-import type { GameStatus } from '@/types/game';
+import type { GameStatus, SuspendedGame } from '@/types/game';
 import type { ItemDefinition } from '@/types/item';
 import { createItemBody, createWalls, getItemDataFromBody, midpoint } from '@/utils/physics';
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
 import { loadThemeId, saveThemeId } from '@/utils/storage';
+import { clearSuspendedGame, loadSuspendedGame, saveSuspendedGame } from '@/utils/suspendStorage';
 
 // `yarn debug` で起動された時のみ true。
 // 通常モードでは Lv1〜MAX_DROPPABLE_LEVEL からランダム抽選するが、デバッグモードでは
@@ -141,6 +142,15 @@ export type UseGameResult = {
   isGravityFlipped: boolean;
   // ゲームオーバーまでの残り秒数（ライン超過状態で 5..1 を返す）。null なら非危機状態。
   gameOverCountdown: number | null;
+  // 中断機能：現在の盤面 + スコア + ゲージを localStorage に保存してタイトルへ戻す。
+  suspend: () => void;
+  // タイトル画面で「中断データを使って再開」する時に呼ぶ。
+  // 通常開始は start()、フィールドクリアして始め直しは restart() を使う。
+  resume: (data: SuspendedGame) => void;
+  // 中断データの読み出し / 削除（GameLayout の再開ダイアログから呼ぶ）。
+  // useGame 内部で呼べるようにラップしている。
+  loadSuspended: () => SuspendedGame | null;
+  clearSuspended: () => void;
 };
 
 export type UseGameOptions = {
@@ -867,6 +877,135 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     start();
   }, [start]);
 
+  // 中断：現在の盤面 + スコア + ゲージ + テーマを localStorage に保存し、
+  // フィールドをクリアしてタイトル ('idle') に戻す。
+  // 発動中の必殺技はリセットして保存しない（前提：中断は通常状態から取れる）。
+  const suspend = useCallback(() => {
+    if (statusRef.current !== 'playing') return;
+
+    // body のスナップショットを取る（consumed フラグ付きは除外）。
+    const bodies: SuspendedGame['bodies'] = [];
+    for (const body of itemBodiesRef.current) {
+      const data = getItemDataFromBody(body);
+      if (!data || data.consumed) continue;
+      bodies.push({
+        level: data.level,
+        x: body.position.x,
+        y: body.position.y,
+        vx: body.velocity.x,
+        vy: body.velocity.y,
+        angle: body.angle,
+        angularVelocity: body.angularVelocity,
+      });
+    }
+
+    saveSuspendedGame({
+      score: score.score,
+      themeId: themeIdRef.current,
+      currentItemLevel: currentItemRef.current?.level ?? 1,
+      nextItemLevel: nextItemRef.current?.level ?? 1,
+      skillGauge: skillGaugeRef.current,
+      bodies,
+    });
+
+    // 盤面を完全にリセットしてタイトルへ戻す。
+    const engine = engineRef.current;
+    if (engine) {
+      for (const b of itemBodiesRef.current) {
+        Matter.World.remove(engine.world, b);
+      }
+      itemBodiesRef.current.clear();
+    }
+    if (promotionTimerRef.current !== null) {
+      window.clearTimeout(promotionTimerRef.current);
+      promotionTimerRef.current = null;
+    }
+    mergeEffectRef.current?.clear();
+    resetSkillState();
+    gameOverDangerSinceRef.current = null;
+    lastCountdownRef.current = null;
+    setGameOverCountdown(null);
+    setCurrentItemSynced(null);
+    setNextItemSynced(null);
+    score.reset();
+    canDropRef.current = true;
+    lastDropAtRef.current = 0;
+    statusRef.current = 'idle';
+    setStatus('idle');
+  }, [resetSkillState, score, setCurrentItemSynced, setNextItemSynced]);
+
+  // 中断データから盤面を復元してプレイ再開する。
+  // start() と違い random pick せず、保存された level を使って currentItem / nextItem を構築する。
+  const resume = useCallback(
+    (data: SuspendedGame) => {
+      const engine = engineRef.current;
+      if (!engine) return;
+
+      // 既存ボディを掃除（idle のはずで通常空だが念のため）
+      for (const b of itemBodiesRef.current) {
+        Matter.World.remove(engine.world, b);
+      }
+      itemBodiesRef.current.clear();
+      if (promotionTimerRef.current !== null) {
+        window.clearTimeout(promotionTimerRef.current);
+        promotionTimerRef.current = null;
+      }
+      mergeEffectRef.current?.clear();
+      resetSkillState();
+      gameOverDangerSinceRef.current = null;
+      lastCountdownRef.current = null;
+      setGameOverCountdown(null);
+
+      // テーマを復元（中断中に変更されている場合は元に戻す）。
+      // setThemeId は内部で localStorage 永続化もしてくれる。
+      if (data.themeId !== themeIdRef.current) {
+        setThemeIdState(data.themeId);
+        themeIdRef.current = data.themeId;
+        saveThemeId(data.themeId);
+      }
+
+      // body 復元。level が範囲外のものは無視（後方互換）。
+      const now = performance.now();
+      for (const sb of data.bodies) {
+        if (sb.level < 1 || sb.level > MAX_ITEM_LEVEL) continue;
+        const item = itemForFieldWidth(sb.level, fieldWidthRef.current, data.themeId);
+        const body = createItemBody(item, sb.x, sb.y, now);
+        Matter.Body.setVelocity(body, { x: sb.vx, y: sb.vy });
+        Matter.Body.setAngle(body, sb.angle);
+        Matter.Body.setAngularVelocity(body, sb.angularVelocity);
+        applySprite(body, item);
+        Matter.World.add(engine.world, body);
+        itemBodiesRef.current.add(body);
+      }
+
+      // currentItem / nextItem 復元。範囲外なら 1 にフォールバック。
+      const currentLevel =
+        data.currentItemLevel >= 1 && data.currentItemLevel <= MAX_DROPPABLE_LEVEL
+          ? data.currentItemLevel
+          : 1;
+      const nextLevel =
+        data.nextItemLevel >= 1 && data.nextItemLevel <= MAX_DROPPABLE_LEVEL
+          ? data.nextItemLevel
+          : 1;
+      setCurrentItemSynced(itemForFieldWidth(currentLevel, fieldWidthRef.current, data.themeId));
+      setNextItemSynced(itemForFieldWidth(nextLevel, fieldWidthRef.current, data.themeId));
+
+      // ゲージ復元（範囲チェック）
+      const gauge = Math.max(0, Math.min(SKILL.gaugeMax, data.skillGauge));
+      setSkillGaugeBoth(gauge);
+
+      // スコア復元（既存スコアは reset → setRaw で書き換え）
+      score.reset();
+      score.setRaw(Math.max(0, data.score));
+
+      canDropRef.current = true;
+      lastDropAtRef.current = 0;
+      statusRef.current = 'playing';
+      setStatus('playing');
+    },
+    [resetSkillState, score, setCurrentItemSynced, setNextItemSynced, setSkillGaugeBoth]
+  );
+
   const gameOverLineY = PHYSICS.gameOverLineOffset;
 
   return {
@@ -907,5 +1046,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     selectMagnetTarget,
     isGravityFlipped,
     gameOverCountdown,
+    suspend,
+    resume,
+    loadSuspended: loadSuspendedGame,
+    clearSuspended: clearSuspendedGame,
   };
 };

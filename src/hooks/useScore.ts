@@ -7,6 +7,9 @@ export type UseScoreResult = {
   bestScore: number;
   isNewRecord: boolean;
   add: (delta: number) => void;
+  // 中断データから復元する時用に、score を直接指定値に上書きする。
+  // 通常の加算は add() を使う。
+  setRaw: (value: number) => void;
   reset: () => void;
   finalize: () => { isNewRecord: boolean; finalScore: number };
 };
@@ -29,6 +32,11 @@ export const useScore = (): UseScoreResult => {
     setScore(scoreRef.current);
   }, []);
 
+  const setRaw = useCallback((value: number) => {
+    scoreRef.current = value;
+    setScore(value);
+  }, []);
+
   const reset = useCallback(() => {
     scoreRef.current = 0;
     setScore(0);
@@ -48,5 +56,5 @@ export const useScore = (): UseScoreResult => {
     return { isNewRecord: newRecord, finalScore };
   }, []);
 
-  return { score, bestScore, isNewRecord, add, reset, finalize };
+  return { score, bestScore, isNewRecord, add, setRaw, reset, finalize };
 };

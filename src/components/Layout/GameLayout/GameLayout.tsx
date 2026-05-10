@@ -6,6 +6,7 @@ import { GameField } from '@/components/Game/GameField/GameField';
 import { CountdownOverlay } from '@/components/Overlay/CountdownOverlay/CountdownOverlay';
 import { GameOverScreen } from '@/components/Overlay/GameOverScreen/GameOverScreen';
 import { MagnetSelectingOverlay } from '@/components/Overlay/MagnetSelectingOverlay/MagnetSelectingOverlay';
+import { ResumeDialog } from '@/components/Overlay/ResumeDialog/ResumeDialog';
 import { SkillEffectOverlay } from '@/components/Overlay/SkillEffectOverlay/SkillEffectOverlay';
 import { StartScreen } from '@/components/Overlay/StartScreen/StartScreen';
 import { SettingsDrawer } from '@/components/UI/SettingsDrawer/SettingsDrawer';
@@ -13,6 +14,7 @@ import { SkillButton } from '@/components/UI/SkillButton/SkillButton';
 import { SkillMenu } from '@/components/UI/SkillMenu/SkillMenu';
 import { TopBar } from '@/components/UI/TopBar/TopBar';
 import { useGame } from '@/hooks/useGame';
+import type { SuspendedGame } from '@/types/game';
 
 type Size = { width: number; height: number };
 
@@ -21,6 +23,28 @@ const GameContent = ({ size }: { size: Size }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
+
+  // タイトルでスタートを押した時、中断データがあれば「再開しますか？」ダイアログを出す。
+  // ダイアログ中はこの state に SuspendedGame が入っている。null は非表示。
+  const [pendingResume, setPendingResume] = useState<SuspendedGame | null>(null);
+  const handleStart = useCallback(() => {
+    const suspended = game.loadSuspended();
+    if (suspended) {
+      setPendingResume(suspended);
+    } else {
+      game.start();
+    }
+  }, [game]);
+  const handleResumeYes = useCallback(() => {
+    if (pendingResume) game.resume(pendingResume);
+    game.clearSuspended();
+    setPendingResume(null);
+  }, [game, pendingResume]);
+  const handleResumeNo = useCallback(() => {
+    game.clearSuspended();
+    setPendingResume(null);
+    game.start();
+  }, [game]);
 
   return (
     <>
@@ -64,7 +88,7 @@ const GameContent = ({ size }: { size: Size }) => {
               />
             </div>
           ) : null}
-          {game.status === 'idle' ? <StartScreen onStart={game.start} /> : null}
+          {game.status === 'idle' ? <StartScreen onStart={handleStart} /> : null}
           {game.status === 'gameover' ? (
             <GameOverScreen
               score={game.score}
@@ -88,6 +112,13 @@ const GameContent = ({ size }: { size: Size }) => {
         onChangeTheme={game.setThemeId}
         isSoundOn={game.isSoundOn}
         onToggleSound={game.toggleSound}
+        canSuspend={game.status === 'playing'}
+        onSuspend={game.suspend}
+      />
+      <ResumeDialog
+        open={pendingResume !== null}
+        onYes={handleResumeYes}
+        onNo={handleResumeNo}
       />
     </>
   );

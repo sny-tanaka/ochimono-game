@@ -2,6 +2,7 @@ import { memo } from 'react';
 
 import styles from './style.module.scss';
 
+import { GyroToggle } from '@/components/UI/GyroToggle/GyroToggle';
 import { SoundToggle } from '@/components/UI/SoundToggle/SoundToggle';
 import { ThemeToggle } from '@/components/UI/ThemeToggle/ThemeToggle';
 import type { ThemeId } from '@/constants/themes';
@@ -13,6 +14,8 @@ type Props = {
   onChangeTheme: (id: ThemeId) => void;
   isSoundOn: boolean;
   onToggleSound: () => void;
+  isGyroOn: boolean;
+  onToggleGyro: () => void;
   // 中断機能：プレイ中だけ有効。タイトル / ゲームオーバー時はボタンを描画しない。
   canSuspend: boolean;
   onSuspend: () => void;
@@ -28,6 +31,8 @@ export const SettingsDrawer = memo(
     onChangeTheme,
     isSoundOn,
     onToggleSound,
+    isGyroOn,
+    onToggleGyro,
     canSuspend,
     onSuspend,
   }: Props) => {
@@ -67,6 +72,13 @@ export const SettingsDrawer = memo(
             <SoundToggle
               isOn={isSoundOn}
               onToggle={onToggleSound}
+            />
+          </div>
+          <div className={styles.row}>
+            <span className={styles.row_label}>ジャイロ（傾き操作）</span>
+            <GyroToggle
+              isOn={isGyroOn}
+              onToggle={onToggleGyro}
             />
           </div>
           {canSuspend ? (

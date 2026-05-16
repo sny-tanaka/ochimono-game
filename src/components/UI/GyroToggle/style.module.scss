@@ -1,0 +1,20 @@
+@use 'variables' as var;
+
+.toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 6px rgba(107, 79, 160, 0.2);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.92);
+  }
+}

@@ -24,6 +24,7 @@ import {
   type SkillKind,
 } from '@/constants/skill';
 import { THEMES, type ThemeId } from '@/constants/themes';
+import { requestGyroPermission } from '@/hooks/useGyro';
 import { useScore } from '@/hooks/useScore';
 import { useSound } from '@/hooks/useSound';
 import type { GameStatus, SuspendedGame } from '@/types/game';
@@ -37,7 +38,7 @@ import {
   rootBodyOf,
 } from '@/utils/physics';
 import { calcMergeScore, calcSpecialEliminationBonus } from '@/utils/score';
-import { loadThemeId, saveThemeId } from '@/utils/storage';
+import { loadIsGyroOn, loadThemeId, saveIsGyroOn, saveThemeId } from '@/utils/storage';
 import { clearSuspendedGame, loadSuspendedGame, saveSuspendedGame } from '@/utils/suspendStorage';
 import {
   contourToBodyVertices,
@@ -169,6 +170,9 @@ export type UseGameResult = {
   currentItem: ItemDefinition | null;
   nextItem: ItemDefinition | null;
   isSoundOn: boolean;
+  // ジャイロ（端末傾き）でフィールドを傾ける機能の ON/OFF。
+  isGyroOn: boolean;
+  toggleGyro: () => void;
   themeId: ThemeId;
   // 命令的に effect を流し込むためのハンドル ref。GameField に渡す。
   mergeEffectRef: React.RefObject<MergeEffectHandle | null>;
@@ -271,6 +275,24 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
 
   const score = useScore();
   const sound = useSound();
+
+  // ジャイロ（端末傾き）設定。localStorage 由来、既定 OFF。
+  // ON 切り替え時は iOS の許可ダイアログをユーザージェスチャ内で出す必要があるため、
+  // toggle ハンドラ内で requestGyroPermission を await する。
+  const [isGyroOn, setIsGyroOnState] = useState<boolean>(() => loadIsGyroOn());
+  const toggleGyro = useCallback(() => {
+    setIsGyroOnState((prev) => {
+      const next = !prev;
+      if (next) {
+        // 許可要求は「クリックという gesture 内で呼ぶ」ことが要件。
+        // await せずここで発火だけしておけば iOS でもプロンプトが出る。
+        // 拒否されてもイベントが来ないだけで実害はないので state は ON のままにする。
+        void requestGyroPermission();
+      }
+      saveIsGyroOn(next);
+      return next;
+    });
+  }, []);
 
   // collision / afterUpdate / drop の useCallback deps を空にできるように、
   // 副作用の起点となる最新関数は ref に逃がす（張り替え抑制）。
@@ -1170,6 +1192,8 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     currentItem,
     nextItem,
     isSoundOn: sound.isSoundOn,
+    isGyroOn,
+    toggleGyro,
     themeId,
     mergeEffectRef,
     canvasContainerRef,

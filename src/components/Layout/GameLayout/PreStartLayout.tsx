@@ -8,11 +8,14 @@ import { StartScreen } from '@/components/Overlay/StartScreen/StartScreen';
 import { SettingsDrawer } from '@/components/UI/SettingsDrawer/SettingsDrawer';
 import type { ThemeId } from '@/constants/themes';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
+import { requestGyroPermission } from '@/hooks/useGyro';
 import type { SuspendedGame } from '@/types/game';
 import {
   loadBestScore,
+  loadIsGyroOn,
   loadIsSoundOn,
   loadThemeId,
+  saveIsGyroOn,
   saveIsSoundOn,
   saveThemeId,
 } from '@/utils/storage';
@@ -54,6 +57,16 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
     setIsSoundOnState((prev) => {
       const next = !prev;
       saveIsSoundOn(next);
+      return next;
+    });
+  }, []);
+  const [isGyroOn, setIsGyroOnState] = useState<boolean>(() => loadIsGyroOn());
+  const toggleGyro = useCallback(() => {
+    setIsGyroOnState((prev) => {
+      const next = !prev;
+      // iOS の許可ダイアログはクリック gesture 内で要求する必要がある。
+      if (next) void requestGyroPermission();
+      saveIsGyroOn(next);
       return next;
     });
   }, []);
@@ -117,6 +130,8 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
         onChangeTheme={setThemeId}
         isSoundOn={isSoundOn}
         onToggleSound={toggleSound}
+        isGyroOn={isGyroOn}
+        onToggleGyro={toggleGyro}
         canSuspend={false}
         onSuspend={() => {}}
       />

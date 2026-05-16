@@ -12,6 +12,7 @@ import { SkillButton } from '@/components/UI/SkillButton/SkillButton';
 import { SkillMenu } from '@/components/UI/SkillMenu/SkillMenu';
 import { TopBar } from '@/components/UI/TopBar/TopBar';
 import { useGame } from '@/hooks/useGame';
+import { useGyro } from '@/hooks/useGyro';
 import type { SuspendedGame } from '@/types/game';
 
 type Size = { width: number; height: number };
@@ -35,6 +36,8 @@ const GameContent = ({
   onExitToTitle: () => void;
 }) => {
   const game = useGame({ fieldWidth: size.width, fieldHeight: size.height });
+  // 端末の傾き → フィールド回転角(rad)。OFF のときは常に 0。
+  const { angleRadRef } = useGyro(game.isGyroOn);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const openSettings = useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = useCallback(() => setIsSettingsOpen(false), []);
@@ -87,6 +90,8 @@ const GameContent = ({
             onDrop={game.drop}
             isMagnetSelecting={game.isMagnetSelecting}
             onMagnetSelect={game.selectMagnetTarget}
+            gyroEnabled={game.isGyroOn}
+            gyroAngleRadRef={angleRadRef}
           />
           <SkillEffectOverlay effect={game.isGravityFlipped ? 'gravityFlip' : null} />
           <MagnetSelectingOverlay
@@ -130,6 +135,8 @@ const GameContent = ({
         onChangeTheme={game.setThemeId}
         isSoundOn={game.isSoundOn}
         onToggleSound={game.toggleSound}
+        isGyroOn={game.isGyroOn}
+        onToggleGyro={game.toggleGyro}
         canSuspend={game.status === 'playing'}
         onSuspend={handleSuspend}
       />

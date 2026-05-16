@@ -14,6 +14,8 @@ vi.mock('@/hooks/useGame', () => ({
     currentItem: null,
     nextItem: null,
     isSoundOn: true,
+    isGyroOn: false,
+    toggleGyro: () => {},
     themeId: 'gumi',
     mergeEffectRef: { current: null },
     canvasContainerRef: { current: null },

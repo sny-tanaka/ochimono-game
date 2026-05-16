@@ -60,6 +60,16 @@ export const saveIsSoundOn = (value: boolean): void => {
   safeSet(GAME.storageKeys.isSoundOn, String(value));
 };
 
+export const loadIsGyroOn = (): boolean => {
+  const raw = safeGet(GAME.storageKeys.isGyroOn);
+  // 既定は OFF（端末センサー / 権限が絡むので明示的にONにしてもらう）。
+  return raw === 'true';
+};
+
+export const saveIsGyroOn = (value: boolean): void => {
+  safeSet(GAME.storageKeys.isGyroOn, String(value));
+};
+
 export const loadThemeId = (): ThemeId => {
   const raw = safeGet(GAME.storageKeys.themeId);
   return isThemeId(raw) ? raw : DEFAULT_THEME_ID;

@@ -26,11 +26,17 @@
   align-items: stretch;
   justify-content: center;
   min-height: 0;
+  // ジャイロでフィールドを回転させると矩形からはみ出すため、
+  // TopBar 側へ食い込まないよう <main> 領域で切り取る。
+  overflow: hidden;
 }
 
 .field_wrapper {
   position: relative;
-  overflow: hidden;
+  // ジャイロ回転時に surface が矩形からはみ出して見えるよう、ここでは
+  // クリップしない（最終的に .main / .layout 側でビューポート内に収める）。
+  // 非回転時は surface が wrapper と同寸なので見た目は変わらない。
+  overflow: visible;
 }
 
 // PreStartLayout 用：StartScreen overlay (position: absolute) を被せる

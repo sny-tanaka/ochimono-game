@@ -16,7 +16,7 @@ import {
   saveIsSoundOn,
   saveThemeId,
 } from '@/utils/storage';
-import { clearSuspendedGame, loadSuspendedGame } from '@/utils/suspendStorage';
+import { loadSuspendedGame } from '@/utils/suspendStorage';
 
 type Props = {
   // 通常スタート（中断データ無し or ユーザーが「いいえ」）。
@@ -34,11 +34,9 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
   // 自前管理されるため、ここで再読み込みする必要はない。
   const [bestScore] = useState(() => loadBestScore());
 
-  // 中断データはタイトル表示用に lazy 初期化で 1 度読み、
-  // 「再開しますか？」ダイアログを開くタイミングでも改めて参照する。
-  const [suspendedSnapshot, setSuspendedSnapshot] = useState<SuspendedGame | null>(() =>
-    loadSuspendedGame()
-  );
+  // 中断データはタイトル表示用に lazy 初期化で 1 度読む。
+  // 「再開しますか？」判定は handleStart で改めて loadSuspendedGame() する。
+  const [suspendedSnapshot] = useState<SuspendedGame | null>(() => loadSuspendedGame());
 
   // 設定 (テーマ / サウンド) は pre-start でも変更可能にしたいので
   // localStorage に直接 read/write する軽量 state を持つ。
@@ -73,18 +71,18 @@ export const PreStartLayout = ({ onStart, onResume }: Props) => {
       onStart();
     }
   }, [onStart]);
+  // 再開しても中断データは消さない（issue #22）。ゲームオーバー時のみ削除。
+  // 再開後にアプリが落ちても、もう一度同じデータから再開できる。
   const handleResumeYes = useCallback(() => {
     if (!pendingResume) return;
     const data = pendingResume;
     setPendingResume(null);
-    clearSuspendedGame();
-    setSuspendedSnapshot(null);
     onResume(data);
   }, [pendingResume, onResume]);
+  // 「いいえ」= 中断データを使わず新規スタート。データはここでは消さない
+  // （ゲームオーバーが唯一の削除点）。新ゲームの進行はオートセーブで上書きされる。
   const handleResumeNo = useCallback(() => {
-    clearSuspendedGame();
     setPendingResume(null);
-    setSuspendedSnapshot(null);
     onStart();
   }, [onStart]);
 

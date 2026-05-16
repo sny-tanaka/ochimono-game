@@ -475,6 +475,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     // 復帰時はそのまま再開（経過時間で大幅にズレないよう Runner の dt に頼る）。
     const onVisibility = () => {
       if (document.hidden) {
+        // バックグラウンド化はアプリ強制終了の前触れになりやすい。
+        // 物理を止める前に進行を保存して取りこぼしを防ぐ。
+        saveSnapshotRef.current();
         Matter.Runner.stop(runner);
         Matter.Render.stop(render);
       } else {
@@ -484,8 +487,15 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     };
     document.addEventListener('visibilitychange', onVisibility);
 
+    // プレイ中の定期オートセーブ。statusRef でガードするので
+    // idle / gameover 中はストレージに書かない。
+    const autoSaveTimer = window.setInterval(() => {
+      saveSnapshotRef.current();
+    }, GAME.autoSaveIntervalMs);
+
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
+      window.clearInterval(autoSaveTimer);
       Matter.Events.off(render, 'afterRender', onAfterRender);
       Matter.Runner.stop(runner);
       Matter.Render.stop(render);
@@ -682,6 +692,9 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
         clearDanger();
         statusRef.current = 'gameover';
         setStatus('gameover');
+        // 中断データはゲームオーバーで初めて破棄する。
+        // （オートセーブ + 再開後も保持の方針なので、ここが唯一の削除点）
+        clearSuspendedGame();
         const result = finalizeRef.current();
         playSoundRef.current(result.isNewRecord ? 'highscore' : 'gameover');
         return;
@@ -1016,13 +1029,15 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     start();
   }, [start]);
 
-  // 中断：現在の盤面 + スコア + ゲージ + テーマを localStorage に保存し、
-  // フィールドをクリアしてタイトル ('idle') に戻す。
-  // 発動中の必殺技はリセットして保存しない（前提：中断は通常状態から取れる）。
-  const suspend = useCallback(() => {
+  // 現在の盤面 + スコア + ゲージ + テーマを localStorage にスナップショット保存する。
+  // 中断ボタン (suspend) からも、プレイ中の定期オートセーブからも呼ばれる。
+  // 盤面リセットなどの副作用は持たない（純粋に保存だけ）。
+  // 発動中の必殺技は保存対象外（前提：再開は通常状態から始まる）。
+  // 盤面が空 かつ スコア 0 の「保存する意味がない」状態では何もしない
+  // （ゲーム開始直後に空スナップショットで旧セーブを潰さないため）。
+  const saveSnapshot = useCallback(() => {
     if (statusRef.current !== 'playing') return;
 
-    // body のスナップショットを取る（consumed フラグ付きは除外）。
     const bodies: SuspendedGame['bodies'] = [];
     for (const body of itemBodiesRef.current) {
       const data = getItemDataFromBody(body);
@@ -1038,6 +1053,8 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       });
     }
 
+    if (bodies.length === 0 && score.score === 0) return;
+
     saveSuspendedGame({
       score: score.score,
       themeId: themeIdRef.current,
@@ -1047,6 +1064,18 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
       magnetUsesLeft: magnetUsesLeftRef.current,
       bodies,
     });
+  }, [score]);
+
+  // collision listener / interval / visibilitychange から最新の saveSnapshot を
+  // 呼べるよう ref に逃がす（deps 空で張り替えを抑えつつ stale closure を防ぐ）。
+  const saveSnapshotRef = useRef(saveSnapshot);
+  saveSnapshotRef.current = saveSnapshot;
+
+  // 中断：スナップショットを保存し、フィールドをクリアしてタイトル ('idle') に戻す。
+  const suspend = useCallback(() => {
+    if (statusRef.current !== 'playing') return;
+
+    saveSnapshot();
 
     // 盤面を完全にリセットしてタイトルへ戻す。
     const engine = engineRef.current;
@@ -1072,7 +1101,7 @@ export const useGame = ({ fieldWidth, fieldHeight }: UseGameOptions): UseGameRes
     lastDropAtRef.current = 0;
     statusRef.current = 'idle';
     setStatus('idle');
-  }, [resetSkillState, score, setCurrentItemSynced, setNextItemSynced]);
+  }, [saveSnapshot, resetSkillState, score, setCurrentItemSynced, setNextItemSynced]);
 
   // 中断データから盤面を復元してプレイ再開する。
   // start() と違い random pick せず、保存された level を使って currentItem / nextItem を構築する。
